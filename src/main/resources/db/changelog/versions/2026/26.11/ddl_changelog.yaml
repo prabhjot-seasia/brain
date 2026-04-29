@@ -1,0 +1,71 @@
+databaseChangeLog:
+  - changeSet:
+      id: BRAIN-011.01
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: solution_patterns
+      changes:
+        - createTable:
+            tableName: solution_patterns
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: project_id
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: requirement_summary
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: plan_summary
+                  type: text
+              - column:
+                  name: code_patterns
+                  type: jsonb
+              - column:
+                  name: conventions_used
+                  type: jsonb
+              - column:
+                  name: success_count
+                  type: int
+                  defaultValueNumeric: 0
+              - column:
+                  name: usage_count
+                  type: int
+                  defaultValueNumeric: 0
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+              - column:
+                  name: updated_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+
+  - changeSet:
+      id: BRAIN-011.02
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_solution_patterns_project_id
+      changes:
+        - createIndex:
+            tableName: solution_patterns
+            indexName: idx_solution_patterns_project_id
+            columns:
+              - column:
+                  name: project_id

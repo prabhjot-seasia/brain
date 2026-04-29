@@ -1,0 +1,25 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: BRAIN-004.01
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: projects
+                columnName: commit_sha
+      changes:
+        - addColumn:
+            tableName: projects
+            columns:
+              - column:
+                  name: commit_sha
+                  type: varchar(40)
+              - column:
+                  name: branch
+                  type: varchar(255)
+                  defaultValue: master
+              - column:
+                  name: repo_url
+                  type: varchar(500)

@@ -1,0 +1,99 @@
+databaseChangeLog:
+  - changeSet:
+      id: BRAIN-005.01
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: user_sessions
+      changes:
+        - createTable:
+            tableName: user_sessions
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: jira_access_token_enc
+                  type: text
+              - column:
+                  name: jira_refresh_token_enc
+                  type: text
+              - column:
+                  name: jira_cloud_id
+                  type: varchar(255)
+              - column:
+                  name: jira_site_url
+                  type: varchar(500)
+              - column:
+                  name: connected_at
+                  type: timestamptz
+              - column:
+                  name: expires_at
+                  type: timestamptz
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+        - createIndex:
+            indexName: user_sessions_user_id_idx
+            tableName: user_sessions
+            unique: true
+            columns:
+              - column:
+                  name: user_id
+
+  - changeSet:
+      id: BRAIN-005.02
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: intake_records
+      changes:
+        - createTable:
+            tableName: intake_records
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: source_type
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: source_reference
+                  type: varchar(500)
+              - column:
+                  name: extracted_text
+                  type: text
+              - column:
+                  name: project_id
+                  type: varchar(255)
+              - column:
+                  name: session_id
+                  type: uuid
+              - column:
+                  name: status
+                  type: varchar(20)
+                  defaultValue: PENDING
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  defaultValueComputed: now()

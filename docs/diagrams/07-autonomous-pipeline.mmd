@@ -1,0 +1,12 @@
+flowchart LR
+    S1["Intake\n―――\nAccept requirement,\ndetect affected repos"]
+    G1{"Approval\nGate"}
+    S2["Clarification\n―――\nAsk questions\nuntil confident"]
+    G2{"Approval\nGate"}
+    S3["Planning\n―――\nGenerate per-repo\nimplementation plan"]
+    G3{"Approval\nGate"}
+    S4["Execution\n―――\nWalk plan graph,\ngenerate code"]
+    G4{"Approval\nGate"}
+    S5["Draft PRs\n―――\nFan out pull\nrequests per repo"]
+
+    S1 --> G1 --> S2 --> G2 --> S3 --> G3 --> S4 --> G4 --> S5

@@ -1,0 +1,100 @@
+databaseChangeLog:
+  - changeSet:
+      id: BRAIN-014.01
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: avenger_reviews
+      changes:
+        - createTable:
+            tableName: avenger_reviews
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: avenger
+                  type: varchar(16)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: project_id
+                  type: varchar(255)
+              - column:
+                  name: request_hash
+                  type: varchar(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: verdict
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: issues
+                  type: jsonb
+              - column:
+                  name: summary
+                  type: text
+              - column:
+                  name: tokens_in
+                  type: int
+                  defaultValueNumeric: 0
+              - column:
+                  name: tokens_out
+                  type: int
+                  defaultValueNumeric: 0
+              - column:
+                  name: latency_ms
+                  type: bigint
+                  defaultValueNumeric: 0
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+
+  - changeSet:
+      id: BRAIN-014.02
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_avenger_reviews_avenger_project_created
+      changes:
+        - createIndex:
+            tableName: avenger_reviews
+            indexName: idx_avenger_reviews_avenger_project_created
+            columns:
+              - column:
+                  name: avenger
+              - column:
+                  name: project_id
+              - column:
+                  name: created_at
+                  descending: true
+
+  - changeSet:
+      id: BRAIN-014.03
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_avenger_reviews_project_created
+      changes:
+        - createIndex:
+            tableName: avenger_reviews
+            indexName: idx_avenger_reviews_project_created
+            columns:
+              - column:
+                  name: project_id
+              - column:
+                  name: created_at
+                  descending: true

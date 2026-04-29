@@ -1,0 +1,19 @@
+databaseChangeLog:
+  - changeSet:
+      id: BRAIN-017.01
+      author: brain
+      changes:
+        - sql:
+            sql: CREATE EXTENSION IF NOT EXISTS pg_trgm
+  - changeSet:
+      id: BRAIN-017.02
+      author: brain
+      runInTransaction: false
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: chunks_content_trgm_idx
+      changes:
+        - sql:
+            sql: CREATE INDEX CONCURRENTLY chunks_content_trgm_idx ON chunks USING gin (content gin_trgm_ops)

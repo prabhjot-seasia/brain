@@ -1,0 +1,94 @@
+databaseChangeLog:
+  - changeSet:
+      id: BRAIN-010.01
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: token_usage_records
+      changes:
+        - createTable:
+            tableName: token_usage_records
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: service_name
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: operation
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: project_id
+                  type: varchar(255)
+              - column:
+                  name: input_tokens
+                  type: int
+                  defaultValueNumeric: 0
+              - column:
+                  name: output_tokens
+                  type: int
+                  defaultValueNumeric: 0
+              - column:
+                  name: cached
+                  type: boolean
+                  defaultValueBoolean: false
+              - column:
+                  name: latency_ms
+                  type: bigint
+                  defaultValueNumeric: 0
+              - column:
+                  name: cost_estimate
+                  type: double precision
+                  defaultValueNumeric: 0
+              - column:
+                  name: model_name
+                  type: varchar(50)
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+
+  - changeSet:
+      id: BRAIN-010.02
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_token_usage_created_at
+      changes:
+        - createIndex:
+            tableName: token_usage_records
+            indexName: idx_token_usage_created_at
+            columns:
+              - column:
+                  name: created_at
+
+  - changeSet:
+      id: BRAIN-010.03
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_token_usage_service_op
+      changes:
+        - createIndex:
+            tableName: token_usage_records
+            indexName: idx_token_usage_service_op
+            columns:
+              - column:
+                  name: service_name
+              - column:
+                  name: operation

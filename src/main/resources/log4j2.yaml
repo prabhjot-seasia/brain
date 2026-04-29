@@ -1,0 +1,46 @@
+# Log4j2 YAML config — matches ce-imei pattern
+# MDC keys: traceId, spanId for distributed tracing readiness
+Configuration:
+  Appenders:
+    Console:
+      name: Console
+      target: SYSTEM_OUT
+      PatternLayout:
+        Pattern: '%d{yyyy-MM-dd HH:mm:ss.SSS} %clr{%5p} [%X{traceId},%X{spanId}] [%15.15t] %clr{%logger{36}}{cyan}: %m%n'
+  Loggers:
+    Logger:
+      - name: com.assurant.brain
+        level: info
+        additivity: false
+        AppenderRef:
+          ref: Console
+      - name: org.springframework.ai
+        level: warn
+        additivity: false
+        AppenderRef:
+          ref: Console
+      - name: org.springframework
+        level: warn
+        additivity: false
+        AppenderRef:
+          ref: Console
+      - name: liquibase
+        level: info
+        additivity: false
+        AppenderRef:
+          ref: Console
+      # Neo4j 5 emits UnknownPropertyKey warnings for any property that has not
+      # yet been written to the graph (e.g. Convention.rule / .trustWeight before
+      # convention extraction has run on a fresh project). The queries are
+      # correct and return empty — the warning is pure noise. Silence the
+      # specific cypher.unrecognized logger; real Cypher errors still surface
+      # under org.springframework.data.neo4j at WARN.
+      - name: org.springframework.data.neo4j.cypher.unrecognized
+        level: error
+        additivity: false
+        AppenderRef:
+          ref: Console
+    Root:
+      level: error
+      AppenderRef:
+        ref: Console

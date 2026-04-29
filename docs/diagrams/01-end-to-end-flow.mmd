@@ -1,0 +1,25 @@
+flowchart LR
+    A["Developer<br>with a requirement<br>e.g. 'Add GSMA Device Check lost/stolen<br>validator to /api/imei/{imei}/validate'"]
+    B[Project Brain]
+    C{"100% confident?<br>WHY/WHAT/<br>WHERE/HOW"}
+    D[Clarifying<br>questions]
+    E[Structured<br>Implementation Plan]
+    F[Affected files<br>+ paths]
+    G[Sequenced steps<br>+ conventions]
+    H[Risks<br>+ severity]
+    I[Cited sources<br>no assumptions]
+
+    A -->|requirement + projectId| B
+    B --> C
+    C -- No --> D
+    D -. developer answers .-> B
+    C -- Yes --> E
+    E --> F
+    E --> G
+    E --> H
+    E --> I
+
+    style A fill:#e0eef7,stroke:#006ebb,color:#000
+    style B fill:#006ebb,stroke:#003f96,color:#fff
+    style E fill:#e0eef7,stroke:#006ebb,color:#000
+    style D fill:#fff4d6,stroke:#ffa000,color:#000

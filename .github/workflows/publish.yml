@@ -1,0 +1,96 @@
+name: Publish to CodeArtifact + ECR
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Version (e.g. 0.1.0)"
+        required: true
+        default: "0.1.0"
+
+permissions:
+  id-token: write
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    env:
+      VERSION: ${{ github.event.inputs.version }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@ff717079ee2060e4bcee96c4779b553acc87447c
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.DLS_CE_CODEARTIFACT_AWS_ACCOUNT }}:role/${{ secrets.DLS_CE_CODEARTIFACT_AWS_ROLE }}
+          aws-region: ${{ secrets.DLS_CE_CODEARTIFACT_AWS_REGION }}
+
+      - name: Gradle dependency cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: ~/.gradle/caches
+          key: ${{ runner.os }}-gradle-caches-${{ hashFiles('**/*.gradle', '**/*.gradle.kts') }}
+
+      - name: Gradle wrapper cache
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830
+        with:
+          path: ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-wrapper-${{ hashFiles('**/gradle/wrapper/gradle-wrapper.properties') }}
+
+      - name: Backend tests + coverage
+        run: ./gradlew --no-daemon check -Pversion="${VERSION}"
+
+      - name: Frontend tests + coverage
+        run: |
+          cd ui
+          npm ci
+          npm run test:coverage
+
+      - name: Build JAR
+        run: ./gradlew --no-daemon bootJar -Pversion="${VERSION}"
+
+      - name: Publish to CodeArtifact
+        id: codeartifact
+        run: |
+          export CODEARTIFACT_URL="${{ secrets.DLS_CE_CODEARTIFACT_URL }}"
+          export CODEARTIFACT_AUTH_TOKEN=$(aws codeartifact get-authorization-token \
+            --domain dls \
+            --domain-owner ${{ secrets.DLS_CE_CODEARTIFACT_AWS_ACCOUNT }} \
+            --query authorizationToken \
+            --output text)
+          ./gradlew --no-daemon -Pversion="${VERSION}" publish
+
+      - name: Tag release
+        id: tag
+        run: |
+          git tag "v${VERSION}"
+          git push origin "v${VERSION}"
+
+      - name: Login to ECR
+        run: |
+          aws ecr get-login-password --region ${{ secrets.DLS_CE_CODEARTIFACT_AWS_REGION }} | \
+            docker login --username AWS --password-stdin \
+            ${{ secrets.DLS_CE_CODEARTIFACT_AWS_ACCOUNT }}.dkr.ecr.${{ secrets.DLS_CE_CODEARTIFACT_AWS_REGION }}.amazonaws.com
+
+      - name: Build and push Docker image
+        id: publish
+        run: |
+          IMAGE=${{ secrets.DLS_CE_CODEARTIFACT_AWS_ACCOUNT }}.dkr.ecr.${{ secrets.DLS_CE_CODEARTIFACT_AWS_REGION }}.amazonaws.com/project-brain
+          docker build -t ${IMAGE}:${VERSION} -t ${IMAGE}:latest .
+          docker push ${IMAGE}:${VERSION}
+          docker push ${IMAGE}:latest
+          echo "image=${IMAGE}:${VERSION}" >> "$GITHUB_OUTPUT"
+
+      - name: Untag on failure
+        if: always() && steps.tag.outcome == 'success' && steps.codeartifact.outcome != 'success'
+        run: |
+          git tag --delete "v${VERSION}" || true
+          git push --delete origin "v${VERSION}" || true

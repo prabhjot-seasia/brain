@@ -1,0 +1,133 @@
+databaseChangeLog:
+  - changeSet:
+      id: BRAIN-009.01
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: ci_remediation_attempts
+      changes:
+        - createTable:
+            tableName: ci_remediation_attempts
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: pr_record_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: workflow_run_id
+                  type: bigint
+              - column:
+                  name: attempt_number
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: varchar(20)
+                  defaultValue: PENDING
+                  constraints:
+                    nullable: false
+              - column:
+                  name: failure_summary
+                  type: jsonb
+              - column:
+                  name: fixes_applied
+                  type: jsonb
+              - column:
+                  name: commit_sha
+                  type: varchar(40)
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+
+  - changeSet:
+      id: BRAIN-009.02
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: learning_events
+      changes:
+        - createTable:
+            tableName: learning_events
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: pr_record_id
+                  type: uuid
+              - column:
+                  name: project_id
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: event_type
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: convention_rule
+                  type: text
+              - column:
+                  name: old_weight
+                  type: double precision
+              - column:
+                  name: new_weight
+                  type: double precision
+              - column:
+                  name: details
+                  type: jsonb
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+
+  - changeSet:
+      id: BRAIN-009.03
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_ci_remediation_pr_id
+      changes:
+        - createIndex:
+            tableName: ci_remediation_attempts
+            indexName: idx_ci_remediation_pr_id
+            columns:
+              - column:
+                  name: pr_record_id
+
+  - changeSet:
+      id: BRAIN-009.04
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_learning_events_project_id
+      changes:
+        - createIndex:
+            tableName: learning_events
+            indexName: idx_learning_events_project_id
+            columns:
+              - column:
+                  name: project_id

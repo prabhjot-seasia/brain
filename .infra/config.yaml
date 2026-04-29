@@ -1,0 +1,42 @@
+environments:
+  default:
+    bedrock:
+      embedding_model: amazon.titan-embed-text-v2:0
+      plan_model: anthropic.claude-sonnet-4-5-v1:0
+      extract_model: anthropic.claude-haiku-4-5-v1:0
+    embed:
+      provider: bedrock-titan
+      dimensions: 1024
+    chunk:
+      max_chars: 18000
+      overlap_chars: 200
+
+  dev:
+    vpc:
+      id: vpc-0ba88ffbf31193b38
+      subnets:
+        - cidr: 10.11.57.0/25
+          route_table: rtb-09f4c13b26536b127
+        - cidr: 10.11.57.128/25
+          route_table: rtb-0eb534b06dfa25122
+    api:
+      certificate: arn:aws:acm:us-east-1:572232158477:certificate/c6ecb475-6178-41b1-ab6f-e45a99d643f6
+      domain: cs.dls-test.com
+      subdomain: dev-brain
+    neo4j:
+      instance_type: t3.medium
+      ebs_size_gb: 100
+    ecs:
+      task_cpu: 1024
+      task_memory: 2048
+      desired_count: 1
+    env_vars:
+      SPRING_PROFILES_ACTIVE: dev
+      SPRING_APPLICATION_NAME: project-brain
+      SPRING_CLOUD_CONFIG_URI: https://dev-configserver.hyla.hylatest.com
+      BRAIN_LLM_PROVIDER: bedrock
+      BRAIN_EMBED_PROVIDER: bedrock-titan
+      BRAIN_EMBED_MODEL: amazon.titan-embed-text-v2:0
+      BRAIN_EMBED_DIMENSIONS: "1024"
+      BRAIN_LLM_PLAN_MODEL: anthropic.claude-sonnet-4-5-v1:0
+      BRAIN_LLM_EXTRACT_MODEL: anthropic.claude-haiku-4-5-v1:0

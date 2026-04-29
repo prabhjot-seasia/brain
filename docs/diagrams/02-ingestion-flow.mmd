@@ -1,0 +1,36 @@
+flowchart TD
+    A[Developer uploads<br>project ZIP]
+    B["POST /api/v1/projects/:id/ingest<br>IngestController"]
+    C["Extract ZIP<br>skip __MACOSX, ._ files"]
+    D["IngestionService<br>@Async — returns 202 immediately"]
+    E{File type?}
+    F[JavaParser<br>parse .java files]
+    G[MavenXpp3Reader<br>parse pom.xml]
+    H["Doc parser<br>.md / .txt / .yaml / .json"]
+    I[Class + Method chunks<br>+ headers]
+    J["LibraryNode<br>groupId:artifactId"]
+    K[Doc chunks<br>trustWeight 1.5]
+    L["splitIfOversized<br>chunks > max-chars"]
+    M[OpenAI Embeddings<br>text-embedding-3-small<br>1536 dims]
+    N[("PostgreSQL +<br>pgvector<br>HNSW index")]
+    O[("Neo4j graph<br>Project → Module<br>→ Class → Library")]
+    P{Status}
+    Q[ingestion_status: COMPLETE<br>ready for queries]
+    R["ingestion_status: FAILED<br>+ user-friendly error<br>e.g. 'Invalid OpenAI API key'"]
+
+    A --> B --> C --> D --> E
+    E -->|.java| F --> I --> L
+    E -->|pom.xml| G --> J --> O
+    E -->|.md/.txt/.yaml| H --> K --> L
+    L --> M --> N
+    F --> O
+    M --> P
+    P -->|success| Q
+    P -->|failure| R
+
+    style A fill:#e0eef7,stroke:#006ebb,color:#000
+    style D fill:#006ebb,stroke:#003f96,color:#fff
+    style N fill:#fff4d6,stroke:#ffa000,color:#000
+    style O fill:#fff4d6,stroke:#ffa000,color:#000
+    style Q fill:#d4edda,stroke:#28a745,color:#000
+    style R fill:#f8d7da,stroke:#dc3545,color:#000

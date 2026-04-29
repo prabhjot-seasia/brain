@@ -1,0 +1,15 @@
+(?i)ignore\s+(all\s+)?(previous|prior|above)\s+(instructions|prompts|messages)
+(?i)disregard\s+(all\s+)?(previous|prior|above)\s+(instructions|prompts|messages)
+(?i)forget\s+(everything|all\s+instructions|your\s+instructions)
+(?i)you\s+are\s+now\s+(a\s+)?(different|new)
+(?i)system\s*:\s*you\s+are
+(?i)###\s*(system|admin|root)
+(?i)<\s*system\s*>
+(?i)new\s+instructions\s*:
+(?i)override\s+(previous|prior|all)\s+(instructions|rules)
+(?i)reveal\s+(your|the)\s+(system\s+)?prompt
+(?i)print\s+(your|the)\s+(system\s+)?prompt
+(?i)show\s+me\s+(your|the)\s+(system\s+)?prompt
+(?i)jailbreak
+(?i)DAN\s+mode
+(?i)developer\s+mode

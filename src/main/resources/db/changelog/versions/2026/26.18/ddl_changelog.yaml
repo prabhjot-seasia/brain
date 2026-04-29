@@ -1,0 +1,62 @@
+databaseChangeLog:
+  - changeSet:
+      id: BRAIN-018.01
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: generated_documents
+                columnName: content_pdf
+      changes:
+        - addColumn:
+            tableName: generated_documents
+            columns:
+              - column:
+                  name: content_pdf
+                  type: bytea
+              - column:
+                  name: content_hash
+                  type: varchar(64)
+              - column:
+                  name: section_results
+                  type: jsonb
+              - column:
+                  name: generated_at
+                  type: timestamp with time zone
+        - createIndex:
+            tableName: generated_documents
+            indexName: idx_generated_docs_project_doctype_hash
+            columns:
+              - column:
+                  name: project_id
+              - column:
+                  name: doc_type
+              - column:
+                  name: content_hash
+
+  - changeSet:
+      id: BRAIN-018.02
+      author: brain
+      changes:
+        - sql:
+            sql: >
+              DELETE FROM generated_documents
+              WHERE doc_type IN ('FLOW_DIAGRAM','SEQUENCE_DIAGRAM','ARCHITECTURE','CLASS_DIAGRAM','EXPLANATION')
+
+  - changeSet:
+      id: BRAIN-018.03
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: generated_documents
+                columnName: section_contents
+      changes:
+        - addColumn:
+            tableName: generated_documents
+            columns:
+              - column:
+                  name: section_contents
+                  type: jsonb

@@ -1,0 +1,130 @@
+name: CDK Infrastructure
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        type: choice
+        required: true
+        options:
+          - dev
+          - prod
+      stack:
+        description: "Which stack to deploy"
+        type: choice
+        required: true
+        options:
+          - all
+          - ecr
+          - network
+          - neo4j
+          - ecs
+      image_tag:
+        description: "Image tag for ECS stack (required when deploying ecs or all)"
+        required: false
+        default: "0.1.0"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  synth:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.11"
+
+      - name: Install CDK dependencies
+        run: |
+          cd .infra
+          pip install -r requirements.txt
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@ff717079ee2060e4bcee96c4779b553acc87447c
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.DLS_CE_CODEARTIFACT_AWS_ACCOUNT }}:role/${{ secrets.DLS_CE_CODEARTIFACT_AWS_ROLE }}
+          aws-region: ${{ secrets.DLS_CE_CODEARTIFACT_AWS_REGION }}
+
+      - name: CDK synth (validate templates)
+        run: |
+          cd .infra
+          AWS_ACCOUNT_ID=${{ secrets.DLS_CE_CODEARTIFACT_AWS_ACCOUNT }} \
+          AWS_REGION=${{ secrets.DLS_CE_CODEARTIFACT_AWS_REGION }} \
+          npx cdk synth --all -c image_tag=${{ github.event.inputs.image_tag }}
+
+  deploy:
+    needs: synth
+    runs-on: ubuntu-latest
+    env:
+      ENV: ${{ github.event.inputs.environment }}
+      STACK: ${{ github.event.inputs.stack }}
+      IMAGE_TAG: ${{ github.event.inputs.image_tag }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.11"
+
+      - name: Install CDK dependencies
+        run: |
+          cd .infra
+          pip install -r requirements.txt
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@ff717079ee2060e4bcee96c4779b553acc87447c
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.DLS_CE_CODEARTIFACT_AWS_ACCOUNT }}:role/${{ secrets.DLS_CE_CODEARTIFACT_AWS_ROLE }}
+          aws-region: ${{ secrets.DLS_CE_CODEARTIFACT_AWS_REGION }}
+
+      - name: Deploy stacks
+        run: |
+          cd .infra
+          export AWS_ACCOUNT_ID=${{ secrets.DLS_CE_CODEARTIFACT_AWS_ACCOUNT }}
+          export AWS_REGION=${{ secrets.DLS_CE_CODEARTIFACT_AWS_REGION }}
+          ENV_UPPER=$(echo "${ENV}" | tr '[:lower:]' '[:upper:]')
+
+          deploy_stack() {
+            echo "Deploying $1..."
+            npx cdk deploy "$1" \
+              --require-approval never \
+              -c image_tag="${IMAGE_TAG}" \
+              --outputs-file /tmp/cdk-outputs.json
+          }
+
+          case "${STACK}" in
+            ecr)
+              deploy_stack "CDK-BRAIN-ECR"
+              ;;
+            network)
+              deploy_stack "CDK-${ENV_UPPER}-BRAIN-NETWORK"
+              ;;
+            neo4j)
+              deploy_stack "CDK-${ENV_UPPER}-BRAIN-NEO4J"
+              ;;
+            ecs)
+              deploy_stack "CDK-${ENV_UPPER}-BRAIN-ECS"
+              ;;
+            all)
+              deploy_stack "CDK-BRAIN-ECR"
+              deploy_stack "CDK-${ENV_UPPER}-BRAIN-NETWORK"
+              deploy_stack "CDK-${ENV_UPPER}-BRAIN-NEO4J"
+              deploy_stack "CDK-${ENV_UPPER}-BRAIN-ECS"
+              ;;
+          esac
+
+      - name: Show outputs
+        if: always()
+        run: |
+          if [ -f /tmp/cdk-outputs.json ]; then
+            cat /tmp/cdk-outputs.json
+          fi

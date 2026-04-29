@@ -1,0 +1,49 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: BRAIN-003.01
+      author: brain
+      comment: |
+        Drop NOT NULL constraints on chunks.project_id / source_type / file_path
+        and remove the chunks_source_type_check / FK constraints. Spring AI's
+        PgVectorStore writes only (id, content, metadata, embedding) — the legacy
+        business columns were never populated by the Spring-AI ingest path and
+        blocked every insert. Project-scoped queries already use metadata->>'projectId'
+        in the JSONB column, so dropping NOT NULL is safe. Existing rows are
+        unaffected; new rows will leave these columns NULL.
+      preConditions:
+        - onFail: MARK_RAN
+        - onFailMessage: chunks.project_id is already nullable — skipping
+        - sqlCheck:
+            expectedResult: "1"
+            sql: |
+              SELECT count(*) FROM information_schema.columns
+              WHERE table_name = 'chunks' AND column_name = 'project_id' AND is_nullable = 'NO'
+      changes:
+        - sql:
+            sql: ALTER TABLE chunks DROP CONSTRAINT IF EXISTS chunks_project_fk;
+        - sql:
+            sql: ALTER TABLE chunks DROP CONSTRAINT IF EXISTS chunks_source_type_check;
+        - sql:
+            sql: ALTER TABLE chunks ALTER COLUMN project_id DROP NOT NULL;
+        - sql:
+            sql: ALTER TABLE chunks ALTER COLUMN source_type DROP NOT NULL;
+        - sql:
+            sql: ALTER TABLE chunks ALTER COLUMN file_path DROP NOT NULL;
+
+  - changeSet:
+      id: BRAIN-003.02
+      author: brain
+      comment: |
+        Index the metadata->>'projectId' JSONB path so deleteByProjectId /
+        countByProjectId stay fast after the switch from column-based filtering
+        to metadata-based filtering.
+      preConditions:
+        - onFail: MARK_RAN
+        - onFailMessage: chunks_metadata_projectid_idx already exists — skipping
+        - not:
+            - indexExists:
+                indexName: chunks_metadata_projectid_idx
+      changes:
+        - sql:
+            sql: CREATE INDEX chunks_metadata_projectid_idx ON chunks ((metadata->>'projectId'));

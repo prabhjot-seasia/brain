@@ -1,0 +1,62 @@
+spring:
+  autoconfigure:
+    exclude:
+      # Neo4j not available in test environment — repos provided as @MockitoBean
+      - org.springframework.boot.autoconfigure.data.neo4j.Neo4jDataAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.neo4j.Neo4jRepositoriesAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.neo4j.Neo4jReactiveDataAutoConfiguration
+      - org.springframework.boot.autoconfigure.data.neo4j.Neo4jReactiveRepositoriesAutoConfiguration
+      # Bedrock not available in test environment — prevent AWS region resolution errors
+      - org.springframework.ai.autoconfigure.bedrock.BedrockAutoConfiguration
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+
+  # Datasource URL/credentials injected via @DynamicPropertySource in BrainApplicationTests
+  # (uses pgvector/pgvector:pg16 TestContainers image so vector migrations run cleanly)
+
+  liquibase:
+    contexts: test
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+
+  ai:
+    # Use ollama as the active embedding provider in tests so OpenAI auto-config
+    # doesn't try to validate an API key. VectorStore is @MockitoBean'd in every IT,
+    # so the embedding model is never actually invoked — Spring AI's
+    # OllamaEmbeddingAutoConfiguration creates the bean lazily without an HTTP call.
+    model:
+      embedding: ollama
+    anthropic:
+      api-key: test-key
+    openai:
+      # Placeholder — Spring AI 1.0's OpenAI starter eagerly creates audio/image/
+      # moderation models that validate the api-key at bean-creation time, even
+      # though we never use them. Setting a fake key satisfies that validation.
+      api-key: test-key
+    ollama:
+      base-url: http://localhost:11434       # never actually called in tests
+      embedding:
+        options:
+          model: bge-m3
+    vectorstore:
+      pgvector:
+        initialize-schema: false             # schema created by Liquibase
+        dimensions: 1024                     # must match brain.embed.dimensions and the chunks.embedding column
+
+brain:
+  llm:
+    plan-model: claude-haiku-4-5-20251001
+    extract-model: claude-haiku-4-5-20251001
+    provider: anthropic
+  embed:
+    provider: ollama
+    model: bge-m3
+    dimensions: 1024                         # matches the Liquibase BRAIN-002.01 migration (vector(1024))
+  rag:
+    top-k-code: 5
+    top-k-doc: 3
+    max-context-tokens: 3000
+  chunk:
+    max-chars: 2000       # small limit in tests to trigger splitting on modest-sized files
+    overlap-chars: 100

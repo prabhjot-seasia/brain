@@ -1,0 +1,57 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: BRAIN-002.01
+      author: brain-team
+      comment: |
+        BRAIN-002 | ALTER | resize chunks.embedding from vector(1536) to vector(1024).
+        The new size accommodates both Phase 1 (Ollama bge-m3, 1024 dims) and Phase 2
+        (AWS Bedrock Titan v2, 1024 dims) so we never need to migrate the vector column
+        again. This is destructive — any existing embeddings are dropped and projects
+        must be re-ingested. Acceptable because no production data exists at this point.
+      preConditions:
+        - onFail: MARK_RAN
+        - onFailMessage: chunks.embedding is already vector(1024) — skipping BRAIN-002.01
+        - sqlCheck:
+            expectedResult: "1540"
+            sql: |
+              SELECT atttypmod
+              FROM pg_attribute
+              WHERE attrelid = 'chunks'::regclass
+                AND attname  = 'embedding'
+      changes:
+        - sql:
+            sql: DROP INDEX IF EXISTS chunks_embedding_hnsw_idx;
+        - sql:
+            sql: ALTER TABLE chunks DROP COLUMN IF EXISTS embedding;
+        - sql:
+            sql: ALTER TABLE chunks ADD COLUMN embedding vector(1024);
+        - sql:
+            sql: CREATE INDEX IF NOT EXISTS chunks_embedding_hnsw_idx ON chunks USING hnsw (embedding vector_cosine_ops);
+
+  - changeSet:
+      id: BRAIN-002.02
+      author: brain-team
+      comment: |
+        BRAIN-002 | ALTER | resize chunks.embedding from vector(1536) to vector(1024).
+        Supersedes BRAIN-002.01 which had a faulty precondition. Destructive: drops
+        all existing embeddings — re-ingest projects after this runs.
+      preConditions:
+        - onFail: MARK_RAN
+        - onFailMessage: chunks.embedding is already vector(1024) or smaller — skipping BRAIN-002.02
+        - sqlCheck:
+            expectedResult: "1536"
+            sql: |
+              SELECT atttypmod
+              FROM pg_attribute
+              WHERE attrelid = 'chunks'::regclass
+                AND attname  = 'embedding'
+      changes:
+        - sql:
+            sql: DROP INDEX IF EXISTS chunks_embedding_hnsw_idx;
+        - sql:
+            sql: ALTER TABLE chunks DROP COLUMN IF EXISTS embedding;
+        - sql:
+            sql: ALTER TABLE chunks ADD COLUMN embedding vector(1024);
+        - sql:
+            sql: CREATE INDEX IF NOT EXISTS chunks_embedding_hnsw_idx ON chunks USING hnsw (embedding vector_cosine_ops);

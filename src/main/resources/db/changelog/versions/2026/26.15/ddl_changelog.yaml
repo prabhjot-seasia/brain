@@ -1,0 +1,38 @@
+databaseChangeLog:
+  - changeSet:
+      id: BRAIN-015.01
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: learning_events
+                columnName: avenger_id
+      changes:
+        - addColumn:
+            tableName: learning_events
+            columns:
+              - column:
+                  name: avenger_id
+                  type: varchar(16)
+
+  - changeSet:
+      id: BRAIN-015.02
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_learning_events_avenger_project_created
+      changes:
+        - createIndex:
+            tableName: learning_events
+            indexName: idx_learning_events_avenger_project_created
+            columns:
+              - column:
+                  name: avenger_id
+              - column:
+                  name: project_id
+              - column:
+                  name: created_at
+                  descending: true

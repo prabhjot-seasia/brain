@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "project-brain": {
+      "command": "node",
+      "args": ["<ABSOLUTE_PATH_TO>/project-brain/mcp/dist/server.js"],
+      "env": {
+        "BRAIN_API_URL": "http://localhost:8080"
+      }
+    }
+  }
+}

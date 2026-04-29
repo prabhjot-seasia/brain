@@ -1,0 +1,45 @@
+databaseChangeLog:
+  - changeSet:
+      id: BRAIN-007.01
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: ticket_proposals
+      changes:
+        - createTable:
+            tableName: ticket_proposals
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: source_text
+                  type: text
+              - column:
+                  name: jira_project_key
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: proposed_tickets
+                  type: jsonb
+              - column:
+                  name: created_ticket_keys
+                  type: jsonb
+              - column:
+                  name: status
+                  type: varchar(20)
+                  defaultValue: PROPOSED
+              - column:
+                  name: user_id
+                  type: varchar(255)
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  defaultValueComputed: now()

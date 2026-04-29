@@ -1,0 +1,133 @@
+# ─────────────────────────────────────────
+# Environment — never commit secrets
+# ─────────────────────────────────────────
+.env
+.env.local
+docker/runtime.env
+*.pem
+*.key
+*.crt
+
+# ─────────────────────────────────────────
+# Gradle / Java
+# ─────────────────────────────────────────
+.gradle/
+build/
+out/
+bin/
+*.class
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
+!gradle/wrapper/gradle-wrapper.properties
+hs_err_pid*
+replay_pid*
+
+# ─────────────────────────────────────────
+# Test reports & coverage
+# ─────────────────────────────────────────
+**/build/reports/
+**/build/test-results/
+**/build/jacoco/
+**/build/cucumber/
+*.exec
+
+# ─────────────────────────────────────────
+# IDE
+# ─────────────────────────────────────────
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+.project
+.classpath
+.settings/
+.factorypath
+.apt_generated/
+.springBeans
+
+# ─────────────────────────────────────────
+# Node / MCP server
+# ─────────────────────────────────────────
+mcp/node_modules/
+mcp/dist/
+mcp/*.log
+mcp/.npm/
+
+# ─────────────────────────────────────────
+# React UI
+# ─────────────────────────────────────────
+ui/node_modules/
+ui/dist/
+ui/.vite/
+ui/*.log
+ui/.npm/
+ui/coverage/
+ui/.ui.pid
+ui/.ui.log
+
+# ─────────────────────────────────────────
+# Logs
+# ─────────────────────────────────────────
+*.log
+logs/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ─────────────────────────────────────────
+# Generated documentation
+# ─────────────────────────────────────────
+*.pdf
+README.html
+docs/generated/
+
+# ─────────────────────────────────────────
+# OS junk
+# ─────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ─────────────────────────────────────────
+# Temp / runtime
+# ─────────────────────────────────────────
+/tmp/brain-ingest-*/
+*.tmp
+*.swp
+*.bak
+*~
+
+# ─────────────────────────────────────────
+# Selenium / browser test artifacts
+# ─────────────────────────────────────────
+chromedriver*
+geckodriver*
+*.session
+.cache/
+build/screenshots/
+
+# ─────────────────────────────────────────
+# Docker volumes (if mounted into repo by accident)
+# ─────────────────────────────────────────
+pgdata/
+neo4jdata/
+
+# ─────────────────────────────────────────
+# Claude / agent harness state
+# ─────────────────────────────────────────
+.claude/
+
+# ─────────────────────────────────────────
+# UI dev-server runtime artifacts
+# ─────────────────────────────────────────
+.ui.pid
+.ui.log
+ui/.ui.pid
+ui/.ui.log
+ui/node_modules/.vite/

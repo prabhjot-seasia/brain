@@ -1,0 +1,6 @@
+package com.assurant.brain.enums;
+
+public enum LearningEventType {
+    CONVENTION_WEIGHT_ADJUSTED, CONVENTION_DISCOVERED, CONVENTION_DEPRECATED,
+    AVENGER_VIOLATION_OBSERVED
+}

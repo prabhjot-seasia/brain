@@ -1,0 +1,183 @@
+databaseChangeLog:
+  - changeSet:
+      id: BRAIN-016.01
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: clarification_sessions
+                columnName: affected_projects
+      changes:
+        - addColumn:
+            tableName: clarification_sessions
+            columns:
+              - column:
+                  name: affected_projects
+                  type: jsonb
+  - changeSet:
+      id: BRAIN-016.02
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: clarification_sessions
+                columnName: plan_graph_json
+      changes:
+        - addColumn:
+            tableName: clarification_sessions
+            columns:
+              - column:
+                  name: plan_graph_json
+                  type: jsonb
+  - changeSet:
+      id: BRAIN-016.03
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: pr_batch
+      changes:
+        - createTable:
+            tableName: pr_batch
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: session_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: overall_status
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: total_repos
+                  type: int
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: succeeded
+                  type: int
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: failed
+                  type: int
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: skipped
+                  type: int
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamptz
+              - column:
+                  name: updated_at
+                  type: timestamptz
+  - changeSet:
+      id: BRAIN-016.04
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: pull_request_records
+                columnName: batch_id
+      changes:
+        - addColumn:
+            tableName: pull_request_records
+            columns:
+              - column:
+                  name: batch_id
+                  type: uuid
+  - changeSet:
+      id: BRAIN-016.05
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: pull_request_records
+                columnName: project_id
+      changes:
+        - addColumn:
+            tableName: pull_request_records
+            columns:
+              - column:
+                  name: project_id
+                  type: varchar(255)
+  - changeSet:
+      id: BRAIN-016.06
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: pull_request_records
+                columnName: failure_stage
+      changes:
+        - addColumn:
+            tableName: pull_request_records
+            columns:
+              - column:
+                  name: failure_stage
+                  type: varchar(32)
+  - changeSet:
+      id: BRAIN-016.07
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_pull_request_records_batch_id
+      changes:
+        - createIndex:
+            indexName: idx_pull_request_records_batch_id
+            tableName: pull_request_records
+            columns:
+              - column:
+                  name: batch_id
+              - column:
+                  name: created_at
+                  descending: true
+  - changeSet:
+      id: BRAIN-016.08
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_pr_batch_session
+      changes:
+        - createIndex:
+            indexName: idx_pr_batch_session
+            tableName: pr_batch
+            columns:
+              - column:
+                  name: session_id
+              - column:
+                  name: created_at
+                  descending: true
+  - changeSet:
+      id: BRAIN-016.09
+      author: brain
+      changes:
+        - sql:
+            sql: ALTER TABLE clarification_sessions DROP CONSTRAINT IF EXISTS clarification_sessions_status_check;
+        - sql:
+            sql: ALTER TABLE clarification_sessions ADD CONSTRAINT clarification_sessions_status_check CHECK (status IN ('PENDING', 'CLARIFYING', 'PLANNED', 'EXECUTING', 'EXECUTED', 'COMPLETE'));

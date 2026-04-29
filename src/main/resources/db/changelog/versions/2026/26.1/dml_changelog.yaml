@@ -1,0 +1,6 @@
+databaseChangeLog:
+  # DML changesets will be added here as reference/seed data is needed.
+  # Example: default project conventions, system configuration entries.
+  #
+  # Naming convention: BRAIN-NNN.NN
+  # Format: BRAIN-{ticket}.{sequence}

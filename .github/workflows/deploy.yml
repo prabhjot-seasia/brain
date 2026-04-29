@@ -1,0 +1,79 @@
+name: Deploy to ECS
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Target environment"
+        type: choice
+        required: true
+        options:
+          - dev
+      version:
+        description: "Version to deploy (must match a published image tag)"
+        required: true
+        default: "0.1.0"
+
+permissions:
+  id-token: write
+  contents: read
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    env:
+      ENV: ${{ github.event.inputs.environment }}
+      VERSION: ${{ github.event.inputs.version }}
+      ACCOUNT: ${{ secrets.DLS_CE_CODEARTIFACT_AWS_ACCOUNT }}
+      REGION: ${{ secrets.DLS_CE_CODEARTIFACT_AWS_REGION }}
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@ff717079ee2060e4bcee96c4779b553acc87447c
+        with:
+          role-to-assume: arn:aws:iam::${{ secrets.DLS_CE_CODEARTIFACT_AWS_ACCOUNT }}:role/${{ secrets.DLS_CE_CODEARTIFACT_AWS_ROLE }}
+          aws-region: ${{ secrets.DLS_CE_CODEARTIFACT_AWS_REGION }}
+
+      - name: Verify image exists in ECR
+        run: |
+          aws ecr describe-images \
+            --repository-name project-brain \
+            --image-ids imageTag=${VERSION} > /dev/null
+
+      - name: Update task definition with new image
+        run: |
+          IMAGE="${ACCOUNT}.dkr.ecr.${REGION}.amazonaws.com/project-brain:${VERSION}"
+          TASK_DEF=$(aws ecs describe-task-definition \
+            --task-definition ${ENV}-brain \
+            --query taskDefinition)
+          NEW_DEF=$(echo "$TASK_DEF" | jq \
+            --arg IMG "$IMAGE" \
+            '.containerDefinitions[0].image = $IMG |
+             del(.taskDefinitionArn, .revision, .status, .requiresAttributes,
+                 .compatibilities, .registeredAt, .registeredBy)')
+          aws ecs register-task-definition --cli-input-json "$NEW_DEF" > /dev/null
+
+      - name: Deploy new task definition
+        run: |
+          aws ecs update-service \
+            --cluster ${ENV}-brain-cluster \
+            --service ${ENV}-brain \
+            --force-new-deployment > /dev/null
+
+      - name: Wait for service to stabilize
+        run: |
+          aws ecs wait services-stable \
+            --cluster ${ENV}-brain-cluster \
+            --services ${ENV}-brain
+
+      - name: Smoke test
+        run: |
+          ALB_DNS=$(aws elbv2 describe-load-balancers \
+            --query "LoadBalancers[?LoadBalancerName=='${ENV}-brain-alb'].DNSName" \
+            --output text)
+          STATUS=$(curl -sf --max-time 10 "https://${ALB_DNS}/project-brain-backend/actuator/health" | jq -r '.status')
+          if [ "$STATUS" = "UP" ]; then
+            echo "Health check passed"
+          else
+            echo "Health check failed: status=$STATUS"
+            exit 1
+          fi

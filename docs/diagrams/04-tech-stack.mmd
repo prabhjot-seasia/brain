@@ -1,0 +1,82 @@
+flowchart TB
+    subgraph CLIENT["Client Layer"]
+        UI[React + Vite + MUI<br>Admin UI]
+        MCP[MCP Server<br>Node.js + TypeScript]
+        IDE[Claude Code / Cursor<br>via MCP protocol]
+    end
+
+    subgraph API["API Layer — Spring Boot 3.4 / Java 21"]
+        REST[Spring Web<br>REST controllers]
+        VAL[Bean Validation<br>request DTOs]
+        ERR[GlobalExceptionHandler<br>user-friendly errors]
+        ASYNC["Spring @Async<br>bounded thread pool"]
+    end
+
+    subgraph PARSE["Parsing Layer"]
+        JP[JavaParser 3.26<br>AST extraction]
+        MVN[Maven Model Reader<br>pom.xml deps]
+        DOC[Charset Decoder<br>safe UTF-8 reads]
+        ZIP[java.util.zip<br>+ zip-slip guard]
+    end
+
+    subgraph AI["AI / RAG Layer — Spring AI 1.0"]
+        CHAT[ChatModel abstraction<br>provider-agnostic]
+        EMB[Embedding API<br>OpenAI / Ollama]
+        VS[VectorStore<br>pgvector backend]
+        FB[FilterExpressionBuilder<br>SQL injection safe]
+    end
+
+    subgraph LLM["LLM Providers — Runtime Switchable"]
+        ANT[Anthropic Claude<br>Sonnet 4.5 + Haiku 4.5]
+        OLL[Ollama<br>local llama3.1]
+        BED[AWS Bedrock<br>Converse API]
+    end
+
+    subgraph DATA["Data Layer"]
+        PG[("PostgreSQL 16<br>+ pgvector HNSW")]
+        NEO[("Neo4j 5<br>Community + APOC")]
+        LIQ[Liquibase YAML<br>schema migrations]
+    end
+
+    subgraph OBS["Observability"]
+        LOG[Log4j2 YAML<br>JSON logs + MDC]
+        ACT[Spring Actuator<br>health + metrics]
+    end
+
+    subgraph TEST["Testing"]
+        TC[TestContainers<br>pgvector + Neo4j]
+        WM[WireMock<br>LLM API stubs]
+        CUC[Cucumber + JUnit 5<br>BDD scenarios]
+        SEL[Selenium + WebDriverManager<br>real-browser UI tests]
+    end
+
+    UI -->|HTTP| REST
+    MCP -->|HTTP| REST
+    IDE -->|stdio| MCP
+    REST --> VAL --> ASYNC
+    REST --> ERR
+    ASYNC --> JP
+    ASYNC --> MVN
+    ASYNC --> DOC
+    REST --> ZIP
+    JP --> CHAT
+    DOC --> EMB
+    EMB --> VS
+    CHAT --> ANT
+    CHAT --> OLL
+    CHAT --> BED
+    VS --> PG
+    JP --> NEO
+    PG --> LIQ
+    REST --> LOG
+    REST --> ACT
+    VS --> FB
+
+    style CLIENT fill:#e0eef7,stroke:#006ebb,color:#000
+    style API fill:#fff4d6,stroke:#ffa000,color:#000
+    style PARSE fill:#f5f8fd,stroke:#0051a4,color:#000
+    style AI fill:#d4edda,stroke:#28a745,color:#000
+    style LLM fill:#e8d5f2,stroke:#6f42c1,color:#000
+    style DATA fill:#f8d7da,stroke:#dc3545,color:#000
+    style OBS fill:#d1ecf1,stroke:#17a2b8,color:#000
+    style TEST fill:#fef3c7,stroke:#d97706,color:#000

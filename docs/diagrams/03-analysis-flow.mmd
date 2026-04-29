@@ -1,0 +1,34 @@
+flowchart TD
+    A[Developer submits<br>requirement + projectId]
+    B["POST /api/v1/analyze<br>AnalyzeController"]
+    C[AnalysisFacade<br>resolve or create session]
+    D["ClarifierService<br>scores 4 dimensions:<br>WHY / WHAT / WHERE / HOW"]
+    E[("LLM<br>Claude / Ollama / Bedrock")]
+    F{"All 4 scores = 1.0?<br>No unknown refs?"}
+    G[Return clarifying<br>questions + session ID]
+    H[Save round to<br>JSONB rounds column]
+    I[Developer answers]
+    J[PlannerService.generatePlan]
+    K[("pgvector<br>top-K code chunks<br>+ top-K doc chunks")]
+    L[("Neo4j<br>conventions<br>+ affected classes")]
+    M[Build planner prompt<br>with RAG + graph context]
+    N[("LLM<br>generates structured<br>JSON plan")]
+    O[Persist plan<br>status = COMPLETE]
+    P[Return plan<br>to developer]
+
+    A --> B --> C --> D --> E --> F
+    F -- No --> G --> H --> I --> B
+    F -- Yes --> J
+    J --> K
+    J --> L
+    K --> M
+    L --> M
+    M --> N --> O --> P
+
+    style A fill:#e0eef7,stroke:#006ebb,color:#000
+    style C fill:#006ebb,stroke:#003f96,color:#fff
+    style J fill:#006ebb,stroke:#003f96,color:#fff
+    style G fill:#fff4d6,stroke:#ffa000,color:#000
+    style P fill:#d4edda,stroke:#28a745,color:#000
+    style K fill:#f5f8fd,stroke:#0051a4,color:#000
+    style L fill:#f5f8fd,stroke:#0051a4,color:#000

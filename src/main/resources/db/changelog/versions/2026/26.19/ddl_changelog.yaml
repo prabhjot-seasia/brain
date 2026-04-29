@@ -1,0 +1,297 @@
+databaseChangeLog:
+  - changeSet:
+      id: BRAIN-019.01
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: project_members
+      changes:
+        - createTable:
+            tableName: project_members
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: project_id
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: role
+                  type: varchar(20)
+                  defaultValue: VIEWER
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: project_members
+            columnNames: project_id, user_id
+            constraintName: uq_project_members_project_user
+        - createIndex:
+            tableName: project_members
+            indexName: idx_project_members_user
+            columns:
+              - column:
+                  name: user_id
+
+  - changeSet:
+      id: BRAIN-019.02
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                tableName: project_members
+                indexName: idx_project_members_project_id
+      changes:
+        - createIndex:
+            tableName: project_members
+            indexName: idx_project_members_project_id
+            columns:
+              - column:
+                  name: project_id
+
+  - changeSet:
+      id: BRAIN-019.03
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - foreignKeyConstraintExists:
+                foreignKeyTableName: project_members
+                foreignKeyName: fk_project_members_project
+      changes:
+        - addForeignKeyConstraint:
+            baseTableName: project_members
+            baseColumnNames: project_id
+            constraintName: fk_project_members_project
+            referencedTableName: projects
+            referencedColumnNames: id
+            onDelete: CASCADE
+
+  - changeSet:
+      id: BRAIN-019.04
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                tableName: learning_events
+                indexName: idx_learning_events_project_created
+      changes:
+        - createIndex:
+            tableName: learning_events
+            indexName: idx_learning_events_project_created
+            columns:
+              - column:
+                  name: project_id
+              - column:
+                  name: created_at
+                  descending: true
+
+  - changeSet:
+      id: BRAIN-019.05
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                tableName: token_usage_records
+                indexName: idx_token_usage_created_at
+      changes:
+        - createIndex:
+            tableName: token_usage_records
+            indexName: idx_token_usage_created_at
+            columns:
+              - column:
+                  name: created_at
+                  descending: true
+
+  - changeSet:
+      id: BRAIN-019.06
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: async_jobs
+      changes:
+        - createTable:
+            tableName: async_jobs
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: job_type
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: target_kind
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: target_id
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: project_id
+                  type: varchar(255)
+              - column:
+                  name: status
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: requested_by
+                  type: varchar(255)
+              - column:
+                  name: started_at
+                  type: timestamp with time zone
+              - column:
+                  name: finished_at
+                  type: timestamp with time zone
+              - column:
+                  name: progress_pct
+                  type: smallint
+              - column:
+                  name: progress_msg
+                  type: varchar(500)
+              - column:
+                  name: result
+                  type: jsonb
+              - column:
+                  name: error_message
+                  type: text
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp with time zone
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+        - sql:
+            sql: >
+              CREATE UNIQUE INDEX uq_async_jobs_inflight
+                ON async_jobs (job_type, target_kind, target_id)
+                WHERE status IN ('QUEUED','RUNNING')
+            rollback: DROP INDEX IF EXISTS uq_async_jobs_inflight
+        - createIndex:
+            tableName: async_jobs
+            indexName: idx_async_jobs_project_created
+            columns:
+              - column:
+                  name: project_id
+              - column:
+                  name: created_at
+                  descending: true
+        - sql:
+            sql: >
+              CREATE INDEX idx_async_jobs_status_active
+                ON async_jobs (status)
+                WHERE status IN ('QUEUED','RUNNING')
+            rollback: DROP INDEX IF EXISTS idx_async_jobs_status_active
+
+  - changeSet:
+      id: BRAIN-019.07
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: generated_document_pdfs
+      changes:
+        - createTable:
+            tableName: generated_document_pdfs
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: document_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: doc_type
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: content_pdf
+                  type: bytea
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+        - addUniqueConstraint:
+            tableName: generated_document_pdfs
+            columnNames: document_id, doc_type
+            constraintName: uq_generated_document_pdfs_doc_type
+        - addForeignKeyConstraint:
+            baseTableName: generated_document_pdfs
+            baseColumnNames: document_id
+            constraintName: fk_generated_document_pdfs_document
+            referencedTableName: generated_documents
+            referencedColumnNames: id
+            onDelete: CASCADE
+        - createIndex:
+            tableName: generated_document_pdfs
+            indexName: idx_generated_document_pdfs_doc
+            columns:
+              - column:
+                  name: document_id
+
+  - changeSet:
+      id: BRAIN-019.08
+      author: brain
+      runInTransaction: false
+      preConditions:
+        - onFail: MARK_RAN
+        - sqlCheck:
+            expectedResult: '0'
+            sql: SELECT count(*) FROM pg_indexes WHERE indexname = 'idx_async_jobs_terminal_finished'
+      changes:
+        - sql:
+            sql: >
+              CREATE INDEX CONCURRENTLY idx_async_jobs_terminal_finished
+                ON async_jobs (finished_at)
+                WHERE status IN ('SUCCEEDED','FAILED','PARTIAL','CANCELLED')
+            rollback: DROP INDEX IF EXISTS idx_async_jobs_terminal_finished

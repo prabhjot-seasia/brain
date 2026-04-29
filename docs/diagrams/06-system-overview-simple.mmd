@@ -1,0 +1,11 @@
+flowchart LR
+    A["Your Codebase\n(GitHub)"] --> B
+
+    subgraph B["Project Brain"]
+        direction LR
+        B1["Ingest"] --> B2["Understand"] --> B3["Plan"] --> B4["Execute"]
+    end
+
+    B --> C1["Implementation\nPlans"]
+    B --> C2["Draft\nPull Requests"]
+    B --> C3["Generated\nDocumentation"]

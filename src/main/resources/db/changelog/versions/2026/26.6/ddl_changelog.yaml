@@ -1,0 +1,57 @@
+databaseChangeLog:
+  - changeSet:
+      id: BRAIN-006.01
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: generated_documents
+      changes:
+        - createTable:
+            tableName: generated_documents
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: project_id
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: title
+                  type: varchar(500)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: doc_type
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: prompt
+                  type: text
+              - column:
+                  name: content_md
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+              - column:
+                  name: updated_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+        - createIndex:
+            indexName: gen_docs_project_id_idx
+            tableName: generated_documents
+            columns:
+              - column:
+                  name: project_id

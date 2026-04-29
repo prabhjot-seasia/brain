@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ClarificationResponse",
+  "type": "object",
+  "required": ["confident", "dimensions", "questions"],
+  "properties": {
+    "confident": {"type": "boolean"},
+    "dimensions": {
+      "type": "object",
+      "required": ["why", "what", "where", "how"],
+      "properties": {
+        "why":   {"$ref": "#/definitions/dimension"},
+        "what":  {"$ref": "#/definitions/dimension"},
+        "where": {"$ref": "#/definitions/dimension"},
+        "how":   {"$ref": "#/definitions/dimension"}
+      }
+    },
+    "unknownReferences": {
+      "type": "array",
+      "items": {"type": "string"}
+    },
+    "questions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["text", "options"],
+        "properties": {
+          "text": {"type": "string"},
+          "options": {
+            "type": "array",
+            "items": {"type": "string"},
+            "minItems": 2,
+            "maxItems": 4
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "dimension": {
+      "type": "object",
+      "required": ["score", "summary"],
+      "properties": {
+        "score":   {"type": "number", "minimum": 0.0, "maximum": 1.0},
+        "summary": {"type": "string"}
+      }
+    }
+  }
+}

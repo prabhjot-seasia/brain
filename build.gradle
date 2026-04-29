@@ -1,0 +1,253 @@
+plugins {
+    id 'java'
+    id 'org.springframework.boot' version '3.4.4'
+    id 'io.spring.dependency-management' version '1.1.7'
+    id 'org.liquibase.gradle' version '2.2.2'
+    id 'com.gorylenko.gradle-git-properties' version '2.4.2'
+    id 'jacoco'
+    id 'maven-publish'
+}
+
+group = 'com.assurant.brain'
+version = '0.0.1-SNAPSHOT'
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+}
+
+bootJar {
+    archiveFileName = 'project-brain.jar'
+    duplicatesStrategy(DuplicatesStrategy.WARN)
+}
+
+tasks.register('copyAvengerPersonas', Copy) {
+    from 'docs/avengers'
+    into "$buildDir/resources/main/avengers"
+    include '*.md'
+}
+
+processResources {
+    dependsOn 'copyAvengerPersonas'
+}
+
+processTestResources {
+    dependsOn 'copyAvengerPersonas'
+}
+
+configurations {
+    all {
+        exclude group: 'org.springframework.boot', module: 'spring-boot-starter-logging'
+    }
+    compileOnly {
+        extendsFrom annotationProcessor
+    }
+}
+
+repositories {
+    mavenCentral()
+}
+
+dependencyManagement {
+    imports {
+        mavenBom "org.springframework.ai:spring-ai-bom:1.0.0"
+        mavenBom "org.springframework.cloud:spring-cloud-dependencies:2024.0.1"
+    }
+}
+
+dependencies {
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.cloud:spring-cloud-starter-config'
+    implementation 'org.springframework.boot:spring-boot-starter-validation'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+    runtimeOnly 'io.micrometer:micrometer-registry-prometheus'
+    implementation 'org.springframework.boot:spring-boot-starter-data-jpa'
+    implementation 'org.springframework.boot:spring-boot-starter-log4j2'
+    runtimeOnly 'com.fasterxml.jackson.dataformat:jackson-dataformat-yaml'
+
+    implementation 'org.springframework.ai:spring-ai-starter-model-anthropic'
+    implementation 'org.springframework.ai:spring-ai-starter-model-openai'
+    implementation 'org.springframework.ai:spring-ai-starter-vector-store-pgvector'
+    implementation 'org.springframework.ai:spring-ai-starter-model-ollama'
+    implementation 'org.springframework.ai:spring-ai-starter-model-bedrock-converse'
+    implementation 'org.springframework.ai:spring-ai-starter-model-bedrock'
+
+    implementation 'org.springframework.boot:spring-boot-starter-data-neo4j'
+    implementation 'org.springframework.boot:spring-boot-starter-data-redis'
+
+    implementation 'org.postgresql:postgresql:42.7.4'
+    implementation 'org.liquibase:liquibase-core'
+
+    implementation 'com.github.javaparser:javaparser-symbol-solver-core:3.26.1'
+    implementation 'org.apache.maven:maven-model:3.9.9'
+    implementation 'org.apache.pdfbox:pdfbox:3.0.3'
+    implementation 'org.apache.poi:poi-ooxml:5.3.0'
+    implementation 'org.jsoup:jsoup:1.18.1'
+
+    implementation 'org.eclipse.jgit:org.eclipse.jgit:7.3.0.202506031305-r'
+
+    implementation 'org.springframework.boot:spring-boot-starter-security'
+    implementation 'io.jsonwebtoken:jjwt-api:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.6'
+    runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.6'
+
+    implementation 'org.springframework.retry:spring-retry'
+    implementation 'org.springframework:spring-aspects'
+
+    compileOnly 'org.projectlombok:lombok'
+    annotationProcessor 'org.projectlombok:lombok'
+    implementation 'org.apache.commons:commons-lang3:3.17.0'
+    implementation 'org.apache.commons:commons-collections4:4.5.0'
+    implementation 'com.networknt:json-schema-validator:1.5.3'
+    implementation 'org.commonmark:commonmark:0.22.0'
+    implementation 'org.commonmark:commonmark-ext-gfm-tables:0.22.0'
+    implementation 'org.commonmark:commonmark-ext-heading-anchor:0.22.0'
+    implementation 'org.xhtmlrenderer:flying-saucer-pdf-openpdf:9.4.0'
+
+    annotationProcessor 'org.springframework.boot:spring-boot-configuration-processor'
+
+    testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation 'org.springframework.security:spring-security-test'
+    testImplementation 'org.springframework.ai:spring-ai-test'
+    testImplementation 'org.testcontainers:junit-jupiter'
+    testImplementation 'org.testcontainers:postgresql'
+    testImplementation 'org.testcontainers:neo4j'
+    testImplementation 'org.wiremock:wiremock-standalone:3.10.0'
+    testImplementation 'org.awaitility:awaitility:4.2.2'
+
+    testImplementation 'io.cucumber:cucumber-java:7.20.1'
+    testImplementation 'io.cucumber:cucumber-spring:7.20.1'
+    testImplementation 'io.cucumber:cucumber-junit-platform-engine:7.20.1'
+    testImplementation 'org.junit.platform:junit-platform-suite'
+
+    testImplementation 'org.seleniumhq.selenium:selenium-java:4.27.0'
+    testImplementation 'io.github.bonigarcia:webdrivermanager:5.9.2'
+}
+
+liquibase {
+    activities {
+        main {
+            changelogFile 'src/main/resources/db/changelog/db.changelog-master.yaml'
+            url System.env.LIQUIBASE_URL ?: 'jdbc:postgresql://localhost:5432/brain'
+            username System.env.LIQUIBASE_USERNAME ?: 'brain'
+            password System.env.LIQUIBASE_PASSWORD ?: 'brain_local'
+            driver 'org.postgresql.Driver'
+        }
+    }
+}
+
+test {
+    useJUnitPlatform()
+    finalizedBy jacocoTestReport
+    maxHeapSize = '2g'
+    jvmArgs '-XX:+UseG1GC'
+    systemProperties System.properties.findAll { it.key.startsWith('cucumber.') || it.key.startsWith('brain.') }
+}
+
+tasks.register('bddLive', Test) {
+    description = 'Run @live BDD scenarios against a deployed Brain API'
+    group       = 'verification'
+
+    useJUnitPlatform()
+    maxHeapSize = '1g'
+    jvmArgs '-XX:+UseG1GC'
+
+    filter {
+        includeTestsMatching 'com.assurant.brain.bdd.CucumberSuiteIT'
+    }
+
+    def liveTarget = project.findProperty('target') ?: 'http://localhost:8080'
+    systemProperty 'brain.bdd.target',     liveTarget
+    systemProperty 'cucumber.filter.tags', '@live and not @ui'
+
+    systemProperties System.properties.findAll {
+        (it.key.startsWith('cucumber.') || it.key.startsWith('brain.')) &&
+        it.key != 'brain.bdd.target' && it.key != 'cucumber.filter.tags'
+    }
+
+    doFirst {
+        logger.lifecycle("BDD live mode → target=${liveTarget}, tags='@live and not @ui'")
+    }
+}
+
+tasks.register('bddUi', Test) {
+    description = 'Run @ui Selenium BDD scenarios against a running UI'
+    group       = 'verification'
+
+    useJUnitPlatform()
+    maxHeapSize = '1g'
+    jvmArgs '-XX:+UseG1GC'
+
+    filter {
+        includeTestsMatching 'com.assurant.brain.bdd.CucumberSuiteIT'
+    }
+
+    def uiTarget = project.findProperty('uiTarget') ?: 'http://localhost:3000'
+    systemProperty 'brain.ui.url',         uiTarget
+    systemProperty 'cucumber.filter.tags', '@ui and not @needs-clean-db'
+
+    systemProperties System.properties.findAll {
+        (it.key.startsWith('cucumber.') || it.key.startsWith('brain.')) &&
+        it.key != 'brain.ui.url' && it.key != 'cucumber.filter.tags'
+    }
+
+    doFirst {
+        logger.lifecycle("BDD UI mode → target=${uiTarget}, tags='@ui and not @needs-clean-db'")
+    }
+}
+
+jacocoTestReport {
+    dependsOn test
+    reports {
+        xml.required = true
+        html.required = true
+    }
+}
+
+jacocoTestCoverageVerification {
+    dependsOn jacocoTestReport
+    violationRules {
+        rule {
+            limit {
+                counter = 'INSTRUCTION'
+                minimum = 0.90
+            }
+        }
+        rule {
+            limit {
+                counter = 'BRANCH'
+                minimum = 0.70
+            }
+        }
+    }
+}
+
+tasks.named('check') {
+    dependsOn jacocoTestCoverageVerification
+}
+
+publishing {
+    publications {
+        maven(MavenPublication) {
+            groupId 'com.assurant'
+            artifactId 'project-brain'
+            artifact bootJar
+        }
+    }
+    repositories {
+        maven {
+            url System.env.CODEARTIFACT_URL
+            credentials {
+                username 'aws'
+                password System.env.CODEARTIFACT_AUTH_TOKEN
+            }
+        }
+    }
+}
+
+gitProperties {
+    failOnNoGitDirectory = false
+    gitPropertiesName = 'git.properties'
+    dateFormat = "yyyy-MM-dd'T'HH:mmZ"
+}

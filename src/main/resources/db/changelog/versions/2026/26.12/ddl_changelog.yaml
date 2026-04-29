@@ -1,0 +1,164 @@
+databaseChangeLog:
+  - changeSet:
+      id: BRAIN-012.01
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_token_usage_created_at
+      changes:
+        - createIndex:
+            tableName: token_usage_records
+            indexName: idx_token_usage_created_at
+            columns:
+              - column:
+                  name: created_at
+                  descending: true
+
+  - changeSet:
+      id: BRAIN-012.02
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_token_usage_project_id
+      changes:
+        - createIndex:
+            tableName: token_usage_records
+            indexName: idx_token_usage_project_id
+            columns:
+              - column:
+                  name: project_id
+
+  - changeSet:
+      id: BRAIN-012.03
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_learning_events_project_id
+      changes:
+        - createIndex:
+            tableName: learning_events
+            indexName: idx_learning_events_project_id
+            columns:
+              - column:
+                  name: project_id
+
+  - changeSet:
+      id: BRAIN-012.04
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_learning_events_pr_record_id
+      changes:
+        - createIndex:
+            tableName: learning_events
+            indexName: idx_learning_events_pr_record_id
+            columns:
+              - column:
+                  name: pr_record_id
+
+  - changeSet:
+      id: BRAIN-012.05
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_pr_records_session_id
+      changes:
+        - createIndex:
+            tableName: pull_request_records
+            indexName: idx_pr_records_session_id
+            columns:
+              - column:
+                  name: session_id
+
+  - changeSet:
+      id: BRAIN-012.06
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_pr_records_created_at
+      changes:
+        - createIndex:
+            tableName: pull_request_records
+            indexName: idx_pr_records_created_at
+            columns:
+              - column:
+                  name: created_at
+                  descending: true
+
+  - changeSet:
+      id: BRAIN-012.07
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_ci_remediation_pr_record_id
+      changes:
+        - createIndex:
+            tableName: ci_remediation_attempts
+            indexName: idx_ci_remediation_pr_record_id
+            columns:
+              - column:
+                  name: pr_record_id
+
+  - changeSet:
+      id: BRAIN-012.08
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_generated_docs_project_id
+      changes:
+        - createIndex:
+            tableName: generated_documents
+            indexName: idx_generated_docs_project_id
+            columns:
+              - column:
+                  name: project_id
+
+  - changeSet:
+      id: BRAIN-012.09
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_ticket_proposals_user_id
+      changes:
+        - createIndex:
+            tableName: ticket_proposals
+            indexName: idx_ticket_proposals_user_id
+            columns:
+              - column:
+                  name: user_id
+
+  - changeSet:
+      id: BRAIN-012.10
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_clarification_sessions_project_status
+      changes:
+        - createIndex:
+            tableName: clarification_sessions
+            indexName: idx_clarification_sessions_project_status
+            columns:
+              - column:
+                  name: project_id
+              - column:
+                  name: status

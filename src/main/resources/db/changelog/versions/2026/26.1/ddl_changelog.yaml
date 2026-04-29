@@ -1,0 +1,227 @@
+databaseChangeLog:
+
+  - changeSet:
+      id: BRAIN-001.01
+      author: brain-team
+      comment: BRAIN-001 | CREATE | projects registry table
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: projects
+        - onFailMessage: projects table already exists
+      changes:
+        - createTable:
+            tableName: projects
+            columns:
+              - column:
+                  name: id
+                  type: varchar(255)
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: projects_pk
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: language
+                  type: varchar(100)
+              - column:
+                  name: framework
+                  type: varchar(100)
+              - column:
+                  name: build_tool
+                  type: varchar(100)
+              - column:
+                  name: description
+                  type: text
+              - column:
+                  name: github_url
+                  type: varchar(500)
+              - column:
+                  name: last_ingested
+                  type: timestamptz
+              - column:
+                  name: metadata
+                  type: jsonb
+                  defaultValue: '{}'
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+
+  - changeSet:
+      id: BRAIN-001.02
+      author: brain-team
+      comment: BRAIN-001 | CREATE | unified chunks table (code + docs)
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: chunks
+        - onFailMessage: chunks table already exists
+      changes:
+        - createTable:
+            tableName: chunks
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: chunks_pk
+                    nullable: false
+              - column:
+                  name: project_id
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+                    foreignKeyName: chunks_project_fk
+                    references: projects(id)
+                    deleteCascade: true
+              - column:
+                  name: source_type
+                  type: varchar(10)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: file_path
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: chunk_type
+                  type: varchar(50)
+              - column:
+                  name: chunk_name
+                  type: varchar(500)
+              - column:
+                  name: package
+                  type: varchar(500)
+              - column:
+                  name: content
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: trust_weight
+                  type: float
+                  defaultValueNumeric: 1.0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: metadata
+                  type: jsonb
+                  defaultValue: '{}'
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+        - sql:
+            sql: ALTER TABLE chunks ADD CONSTRAINT chunks_source_type_check CHECK (source_type IN ('CODE', 'DOC'));
+
+  - changeSet:
+      id: BRAIN-001.03
+      author: brain-team
+      comment: BRAIN-001 | CREATE | embedding column on chunks (vector type requires raw SQL)
+      changes:
+        - sql:
+            sql: ALTER TABLE chunks ADD COLUMN IF NOT EXISTS embedding vector(1536);
+
+  - changeSet:
+      id: BRAIN-001.04
+      author: brain-team
+      comment: BRAIN-001 | CREATE | HNSW index on chunks embedding
+      changes:
+        - sql:
+            sql: CREATE INDEX IF NOT EXISTS chunks_embedding_hnsw_idx ON chunks USING hnsw (embedding vector_cosine_ops);
+
+  - changeSet:
+      id: BRAIN-001.05
+      author: brain-team
+      comment: BRAIN-001 | CREATE | composite index for project-scoped retrieval
+      changes:
+        - sql:
+            sql: CREATE INDEX IF NOT EXISTS chunks_project_source_idx ON chunks(project_id, source_type);
+
+  - changeSet:
+      id: BRAIN-001.06
+      author: brain-team
+      comment: BRAIN-001 | CREATE | clarification sessions table
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: clarification_sessions
+        - onFailMessage: clarification_sessions table already exists
+      changes:
+        - createTable:
+            tableName: clarification_sessions
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    primaryKeyName: clarification_sessions_pk
+                    nullable: false
+              - column:
+                  name: project_id
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: requirement
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: rounds
+                  type: jsonb
+                  defaultValue: '[]'
+              - column:
+                  name: status
+                  type: varchar(20)
+                  defaultValue: PENDING
+                  constraints:
+                    nullable: false
+              - column:
+                  name: final_plan
+                  type: jsonb
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+              - column:
+                  name: updated_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+        - sql:
+            sql: ALTER TABLE clarification_sessions ADD CONSTRAINT clarification_sessions_status_check CHECK (status IN ('PENDING', 'COMPLETE'));
+
+  - changeSet:
+      id: BRAIN-001.07
+      author: brain-team
+      comment: BRAIN-001 | ALTER | add ingestion_status and ingestion_error to projects
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: projects
+                columnName: ingestion_status
+      changes:
+        - addColumn:
+            tableName: projects
+            columns:
+              - column:
+                  name: ingestion_status
+                  type: varchar(20)
+                  defaultValue: PENDING
+              - column:
+                  name: ingestion_error
+                  type: text

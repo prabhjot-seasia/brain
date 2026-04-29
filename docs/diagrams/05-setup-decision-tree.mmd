@@ -1,0 +1,14 @@
+flowchart TD
+    A["Choose your setup path"] --> B{"Do you have\nDocker installed?"}
+
+    B -- Yes --> C{"Want the\nquickest path?"}
+    B -- No --> D["Use Non-Docker Setup\n(docs/SETUP_LOCAL.md#without-docker)"]
+
+    C -- Yes --> E["Use Docker Setup\n(docs/SETUP_LOCAL.md#with-docker)"]
+    C -- No --> D
+
+    D --> F{"Deploying\nto AWS?"}
+    E --> F
+
+    F -- Yes --> G["See AWS Deployment\n(docs/SETUP_AWS.md)"]
+    F -- No --> H["You're all set!"]

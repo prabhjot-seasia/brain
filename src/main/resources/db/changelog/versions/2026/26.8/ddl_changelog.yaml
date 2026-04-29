@@ -1,0 +1,148 @@
+databaseChangeLog:
+  - changeSet:
+      id: BRAIN-008.01
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: pull_request_records
+      changes:
+        - createTable:
+            tableName: pull_request_records
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: session_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: repo_url
+                  type: varchar(500)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: base_branch
+                  type: varchar(100)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: branch_name
+                  type: varchar(200)
+              - column:
+                  name: pr_number
+                  type: int
+              - column:
+                  name: pr_url
+                  type: varchar(500)
+              - column:
+                  name: status
+                  type: varchar(20)
+                  defaultValue: GENERATING
+                  constraints:
+                    nullable: false
+              - column:
+                  name: generated_files
+                  type: jsonb
+              - column:
+                  name: self_review_iterations
+                  type: int
+                  defaultValueNumeric: 0
+              - column:
+                  name: error_message
+                  type: text
+              - column:
+                  name: user_id
+                  type: varchar(255)
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+              - column:
+                  name: updated_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+
+  - changeSet:
+      id: BRAIN-008.02
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: code_review_iterations
+      changes:
+        - createTable:
+            tableName: code_review_iterations
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: pr_record_id
+                  type: uuid
+                  constraints:
+                    nullable: false
+              - column:
+                  name: iteration_number
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: verdict
+                  type: varchar(10)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: issues_found
+                  type: jsonb
+              - column:
+                  name: fixes_applied
+                  type: jsonb
+              - column:
+                  name: created_at
+                  type: timestamptz
+                  defaultValueComputed: now()
+
+  - changeSet:
+      id: BRAIN-008.03
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_pr_records_session_id
+      changes:
+        - createIndex:
+            tableName: pull_request_records
+            indexName: idx_pr_records_session_id
+            columns:
+              - column:
+                  name: session_id
+
+  - changeSet:
+      id: BRAIN-008.04
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - indexExists:
+                indexName: idx_review_iterations_pr_id
+      changes:
+        - createIndex:
+            tableName: code_review_iterations
+            indexName: idx_review_iterations_pr_id
+            columns:
+              - column:
+                  name: pr_record_id

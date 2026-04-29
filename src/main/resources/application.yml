@@ -1,0 +1,393 @@
+spring:
+  application:
+    name: project-brain
+  config:
+    import: 'optional:configserver:'
+  cloud:
+    config:
+      uri: ${SPRING_CLOUD_CONFIG_URI:http://configserver.cloud/}
+      username: ${SPRING_CLOUD_CONFIG_USERNAME:sccsuser}
+      password: ${SPRING_CLOUD_CONFIG_PASSWORD:sccspass}
+      label: brain-01
+
+---
+spring:
+  config:
+    activate:
+      on-profile: local
+
+  lifecycle:
+    timeout-per-shutdown-phase: 30s
+
+  autoconfigure:
+    exclude:
+      - org.springframework.ai.autoconfigure.bedrock.BedrockAutoConfiguration
+
+  servlet:
+    multipart:
+      max-file-size: 512MB
+      max-request-size: 512MB
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    open-in-view: false
+    show-sql: true
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+        jdbc:
+          batch_size: 25
+        order_inserts: true
+        order_updates: true
+
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    enabled: true
+    contexts: local
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/brain
+    username: brain
+    password: ${SPRING_DATASOURCE_PASSWORD:brain_local}
+    hikari:
+      minimum-idle: ${BRAIN_DB_POOL_MIN_IDLE:2}
+      maximum-pool-size: ${BRAIN_DB_POOL_MAX_SIZE:8}
+      idle-timeout: ${BRAIN_DB_POOL_IDLE_TIMEOUT_MS:600000}
+      max-lifetime: ${BRAIN_DB_POOL_MAX_LIFETIME_MS:1800000}
+      connection-timeout: ${BRAIN_DB_POOL_CONNECT_TIMEOUT_MS:30000}
+      leak-detection-threshold: 60000
+
+  data:
+    redis:
+      host: ${BRAIN_REDIS_HOST:localhost}
+      port: ${BRAIN_REDIS_PORT:6379}
+      password: ${BRAIN_REDIS_PASSWORD:}
+      timeout: 5000
+
+  neo4j:
+    uri: bolt://localhost:7687
+    authentication:
+      username: neo4j
+      password: ${SPRING_NEO4J_PASSWORD:brain_local}
+    open-telemetry:
+      enabled: false
+
+  ai:
+    model:
+      embedding: ollama
+    ollama:
+      base-url: ${SPRING_AI_OLLAMA_BASE_URL:http://localhost:11434}
+      init:
+        pull-model-strategy: when_missing
+        timeout: 15m
+        embedding:
+          additional-models:
+            - bge-m3
+      embedding:
+        options:
+          model: bge-m3
+          num-ctx: 8192
+          truncate: false
+      chat:
+        options:
+          model: llama3.1
+          temperature: 0.1
+          num-ctx: 16384
+          num-predict: 6144
+    vectorstore:
+      pgvector:
+        initialize-schema: false
+        index-type: hnsw
+        distance-type: cosine_distance
+        dimensions: 1024
+        table-name: chunks
+
+server:
+  port: 8080
+  shutdown: graceful
+
+brain:
+  llm:
+    plan-model: llama3.1
+    extract-model: llama3.1
+    provider: ollama
+    chars-per-token: 4.0
+  embed:
+    provider: ollama
+    model: bge-m3
+    dimensions: 1024
+    ollama-base-url: ${SPRING_AI_OLLAMA_BASE_URL:http://localhost:11434}
+  rag:
+    top-k-code: 10
+    top-k-doc: 5
+    max-context-tokens: 6000
+    doc-trust-weight: 1.5
+    code-trust-weight: 1.0
+    max-conventions: 10
+    max-graph-classes: 5
+  chunk:
+    max-chars: 18000
+    overlap-chars: 200
+  github:
+    token: ${BRAIN_GITHUB_TOKEN:not-configured}
+    api-base-url: ${BRAIN_GITHUB_API_BASE_URL:https://github.com/AIZ-GL}
+    max-self-review-iterations: 3
+  jira:
+    oauth-client-id: ${BRAIN_JIRA_OAUTH_CLIENT_ID:}
+    oauth-client-secret: ${BRAIN_JIRA_OAUTH_CLIENT_SECRET:}
+    oauth-redirect-uri: ${BRAIN_JIRA_OAUTH_REDIRECT_URI:http://localhost:3000/auth/jira/callback}
+    token-encryption-key: ${BRAIN_TOKEN_ENCRYPTION_KEY:}
+  intake:
+    max-file-size-mb: 50
+  security:
+    jwt-secret: ${BRAIN_JWT_SECRET:}
+    jwt-ttl-minutes: 60
+    cors-allowed-origins: ${BRAIN_CORS_ORIGINS:http://localhost:3000}
+    llm-rate-limit-per-minute: 10
+    api-rate-limit-per-minute: 60
+    rate-limit-window-ms: 60000
+    enforce-project-membership: ${BRAIN_SECURITY_ENFORCE_PROJECT_MEMBERSHIP:false}
+  cache:
+    semantic-threshold: 0.90
+    plan-ttl-minutes: 30
+    convention-ttl-minutes: 5
+    enabled: true
+    avenger-memory-ttl-hours: 24
+    max-memory-hint-tokens: 300
+    pattern-cache-ttl-hours: 24
+  cost:
+    input-token-rate: 0.000003
+    output-token-rate: 0.000015
+  guardrails:
+    max-input-chars: 20000
+    max-prompt-chars: 50000
+    max-output-chars: 30000
+    block-on-pii-detection: false
+    strict-schema: true
+    injection-classifier: REGEX
+  autodev:
+    confidence-threshold: 0.7
+    max-projects: 5
+    max-plan-nodes: 50
+    blast-radius-threshold: 10
+  ci:
+    webhook-secret: ${BRAIN_GITHUB_WEBHOOK_SECRET:}
+    max-remediation-attempts: 3
+    learning-weight-delta: 0.1
+    min-trust-weight: 0.1
+    max-trust-weight: 3.0
+    max-failure-log-chars: 15000
+  clarifier:
+    confidence-average-threshold: 0.75
+    confidence-per-dimension-floor: 0.5
+    first-round-min-questions: 3
+    max-questions-per-round: 5
+    max-rounds: 5
+  learning:
+    max-events-to-scan: 200
+    top-violations-count: 5
+    recent-issues-count: 10
+    violation-threshold: 3
+    max-diff-chars: 10000
+    max-few-shot-examples: 3
+    convention-key-max-length: 30
+  codegen:
+    small-change-max-files: 3
+  sandbox:
+    enabled: ${BRAIN_SANDBOX_ENABLED:false}
+    timeout-seconds: ${BRAIN_SANDBOX_TIMEOUT_SECONDS:600}
+    docker-image: ${BRAIN_SANDBOX_DOCKER_IMAGE:}
+    memory-mb: ${BRAIN_SANDBOX_MEMORY_MB:2048}
+    cpus: ${BRAIN_SANDBOX_CPUS:1.0}
+  hawkeye:
+    asff-product-arn: ${BRAIN_HAWKEYE_ASFF_PRODUCT_ARN:arn:aws:securityhub:::product/project-brain/hawkeye}
+    aws-account-id: ${BRAIN_HAWKEYE_AWS_ACCOUNT_ID:000000000000}
+    region: ${BRAIN_HAWKEYE_REGION:us-east-1}
+  rulepack:
+    approval-token: ${BRAIN_RULEPACK_APPROVAL_TOKEN:}
+  docs:
+    mermaid-cli-path: ${BRAIN_DOCS_MERMAID_CLI_PATH:mmdc}
+    cache-ttl-minutes: ${BRAIN_DOCS_CACHE_TTL_MINUTES:60}
+    max-pdf-bytes: ${BRAIN_DOCS_MAX_PDF_BYTES:52428800}
+    max-prs-included: ${BRAIN_DOCS_MAX_PRS_INCLUDED:20}
+    mermaid-timeout-seconds: ${BRAIN_DOCS_MERMAID_TIMEOUT_SECONDS:30}
+  jobs:
+    sse-heartbeat-ms: ${BRAIN_JOBS_SSE_HEARTBEAT_MS:15000}
+    retention-days: ${BRAIN_JOBS_RETENTION_DAYS:90}
+    retention-cron: ${BRAIN_JOBS_RETENTION_CRON:0 30 3 * * *}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,metrics,prometheus
+  endpoint:
+    health:
+      show-details: when-authorized
+  metrics:
+    tags:
+      application: project-brain
+
+logging:
+  level:
+    com.assurant.brain: DEBUG
+    org.springframework.ai: DEBUG
+
+---
+spring:
+  config:
+    activate:
+      on-profile: test
+
+  servlet:
+    multipart:
+      max-file-size: 512MB
+      max-request-size: 512MB
+
+  jpa:
+    hibernate:
+      ddl-auto: none
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.PostgreSQLDialect
+        format_sql: true
+
+  liquibase:
+    change-log: classpath:db/changelog/db.changelog-master.yaml
+    contexts: test
+
+  ai:
+    anthropic:
+      api-key: test-key
+    openai:
+      api-key: test-key
+    vectorstore:
+      pgvector:
+        initialize-schema: false
+        index-type: hnsw
+        distance-type: cosine_distance
+        dimensions: 1024
+        table-name: chunks
+
+server:
+  port: 8080
+
+brain:
+  llm:
+    plan-model: test-model
+    extract-model: test-model
+    provider: ollama
+    chars-per-token: 4.0
+  embed:
+    provider: ollama
+    model: bge-m3
+    dimensions: 1024
+  rag:
+    top-k-code: 10
+    top-k-doc: 5
+    max-context-tokens: 6000
+    doc-trust-weight: 1.5
+    code-trust-weight: 1.0
+    max-conventions: 10
+    max-graph-classes: 5
+  chunk:
+    max-chars: 18000
+    overlap-chars: 200
+  github:
+    token: not-configured
+    api-base-url: https://github.com/AIZ-GL
+    max-self-review-iterations: 3
+  jira:
+    oauth-client-id: ''
+    oauth-client-secret: ''
+    oauth-redirect-uri: http://localhost:3000/auth/jira/callback
+    token-encryption-key: ''
+  intake:
+    max-file-size-mb: 50
+  security:
+    jwt-secret: test-secret-key-at-least-32-characters-long
+    jwt-ttl-minutes: 60
+    cors-allowed-origins: http://localhost:3000
+    llm-rate-limit-per-minute: 100
+    api-rate-limit-per-minute: 1000
+    rate-limit-window-ms: 60000
+    enforce-project-membership: ${BRAIN_SECURITY_ENFORCE_PROJECT_MEMBERSHIP:false}
+  cache:
+    semantic-threshold: 0.90
+    plan-ttl-minutes: 30
+    convention-ttl-minutes: 5
+    enabled: false
+    avenger-memory-ttl-hours: 24
+    max-memory-hint-tokens: 300
+    pattern-cache-ttl-hours: 24
+  cost:
+    input-token-rate: 0.000003
+    output-token-rate: 0.000015
+  guardrails:
+    max-input-chars: 20000
+    max-prompt-chars: 50000
+    max-output-chars: 30000
+    block-on-pii-detection: false
+    strict-schema: true
+    injection-classifier: REGEX
+  autodev:
+    confidence-threshold: 0.7
+    max-projects: 5
+    max-plan-nodes: 50
+    blast-radius-threshold: 10
+  ci:
+    webhook-secret: ''
+    max-remediation-attempts: 3
+    learning-weight-delta: 0.1
+    min-trust-weight: 0.1
+    max-trust-weight: 3.0
+    max-failure-log-chars: 15000
+  clarifier:
+    confidence-average-threshold: 0.75
+    confidence-per-dimension-floor: 0.5
+    first-round-min-questions: 3
+    max-questions-per-round: 5
+    max-rounds: 5
+  learning:
+    max-events-to-scan: 200
+    top-violations-count: 5
+    recent-issues-count: 10
+    violation-threshold: 3
+    max-diff-chars: 10000
+    max-few-shot-examples: 3
+    convention-key-max-length: 30
+  codegen:
+    small-change-max-files: 3
+  sandbox:
+    enabled: ${BRAIN_SANDBOX_ENABLED:false}
+    timeout-seconds: ${BRAIN_SANDBOX_TIMEOUT_SECONDS:600}
+    docker-image: ${BRAIN_SANDBOX_DOCKER_IMAGE:}
+    memory-mb: ${BRAIN_SANDBOX_MEMORY_MB:2048}
+    cpus: ${BRAIN_SANDBOX_CPUS:1.0}
+  hawkeye:
+    asff-product-arn: ${BRAIN_HAWKEYE_ASFF_PRODUCT_ARN:arn:aws:securityhub:::product/project-brain/hawkeye}
+    aws-account-id: ${BRAIN_HAWKEYE_AWS_ACCOUNT_ID:000000000000}
+    region: ${BRAIN_HAWKEYE_REGION:us-east-1}
+  rulepack:
+    approval-token: ${BRAIN_RULEPACK_APPROVAL_TOKEN:}
+  docs:
+    mermaid-cli-path: ${BRAIN_DOCS_MERMAID_CLI_PATH:mmdc}
+    cache-ttl-minutes: ${BRAIN_DOCS_CACHE_TTL_MINUTES:60}
+    max-pdf-bytes: ${BRAIN_DOCS_MAX_PDF_BYTES:52428800}
+    max-prs-included: ${BRAIN_DOCS_MAX_PRS_INCLUDED:20}
+    mermaid-timeout-seconds: ${BRAIN_DOCS_MERMAID_TIMEOUT_SECONDS:30}
+  jobs:
+    sse-heartbeat-ms: ${BRAIN_JOBS_SSE_HEARTBEAT_MS:15000}
+    retention-days: ${BRAIN_JOBS_RETENTION_DAYS:90}
+    retention-cron: ${BRAIN_JOBS_RETENTION_CRON:0 30 3 * * *}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+  metrics:
+    tags:
+      application: project-brain
