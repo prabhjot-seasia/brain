@@ -202,6 +202,11 @@ public class AutodevFacade {
     }
 
     public MultiRepoPrResult createPrs(String sessionId, List<AutodevCreatePrsRequest.RepoSpec> repos) {
+        return createPrs(sessionId, repos, null);
+    }
+
+    public MultiRepoPrResult createPrs(String sessionId, List<AutodevCreatePrsRequest.RepoSpec> repos,
+                                         String jiraIssueKey) {
         ClarificationSession session = loadSession(sessionId);
         requireStatus(session, "create-prs", SessionStatus.EXECUTED, SessionStatus.COMPLETE);
         if (repos == null || repos.isEmpty()) {
@@ -216,7 +221,7 @@ public class AutodevFacade {
             Map<String, String> files = filesByProject.getOrDefault(spec.projectId(), Map.of());
             targets.add(new MultiRepoPrOrchestrator.RepoTarget(
                     spec.projectId(), spec.repoUrl(), spec.baseBranch(),
-                    files, planSummary));
+                    files, planSummary, jiraIssueKey));
         }
 
         String planJson;

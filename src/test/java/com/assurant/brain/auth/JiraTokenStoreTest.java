@@ -79,7 +79,7 @@ class JiraTokenStoreTest {
     }
 
     private JiraTokenStore buildStore(String encryptionKey) {
-        var jira = new BrainProperties.Jira(null, null, null, encryptionKey);
+        var jira = new BrainProperties.Jira(null, null, null, encryptionKey, null, "AI_DEV_", null);
         var props = new BrainProperties(null, null, null, null, null, jira, null, null, null, null, null, null, null, null, null, null, null, null, null);
         return new JiraTokenStore(props);
     }

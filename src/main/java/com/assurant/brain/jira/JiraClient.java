@@ -34,6 +34,18 @@ public class JiraClient {
     }
 
     @SuppressWarnings("unchecked")
+    public Map<String, Object> getIssueWithComments(String userId, String issueKey) {
+        RestClient client = authenticatedClient(userId);
+        String cloudId = resolveCloudId(userId);
+
+        return client.get()
+                .uri(JIRA_API_BASE + "/{cloudId}/rest/api/3/issue/{issueKey}?fields=*all,comment&expand=renderedFields",
+                        cloudId, issueKey)
+                .retrieve()
+                .body(Map.class);
+    }
+
+    @SuppressWarnings("unchecked")
     public Map<String, Object> searchIssues(String userId, String jql, int maxResults) {
         RestClient client = authenticatedClient(userId);
         String cloudId = resolveCloudId(userId);
@@ -59,26 +71,53 @@ public class JiraClient {
     }
 
     public void addComment(String userId, String issueKey, String commentBody) {
+        addCommentAdf(userId, issueKey, Map.of(
+                "version", 1,
+                "type", "doc",
+                "content", List.of(
+                        Map.of("type", "paragraph",
+                                "content", List.of(
+                                        Map.of("type", "text", "text", commentBody)
+                                ))
+                )));
+    }
+
+    public void addCommentAdf(String userId, String issueKey, Map<String, Object> adfDoc) {
         RestClient client = authenticatedClient(userId);
         String cloudId = resolveCloudId(userId);
-
-        Map<String, Object> adfBody = Map.of(
-                "body", Map.of(
-                        "version", 1,
-                        "type", "doc",
-                        "content", List.of(
-                                Map.of("type", "paragraph",
-                                        "content", List.of(
-                                                Map.of("type", "text", "text", commentBody)
-                                        ))
-                        )
-                )
-        );
 
         client.post()
                 .uri(JIRA_API_BASE + "/{cloudId}/rest/api/3/issue/{issueKey}/comment", cloudId, issueKey)
                 .header("Content-Type", "application/json")
-                .body(adfBody)
+                .body(Map.of("body", adfDoc))
+                .retrieve()
+                .toBodilessEntity();
+    }
+
+    public void transitionLabels(String userId, String issueKey,
+                                  List<String> addLabels, List<String> removeLabels) {
+        RestClient client = authenticatedClient(userId);
+        String cloudId = resolveCloudId(userId);
+
+        List<Map<String, Object>> labelOps = new java.util.ArrayList<>();
+        if (addLabels != null) {
+            for (String l : addLabels) {
+                if (l != null && !l.isBlank()) labelOps.add(Map.of("add", l));
+            }
+        }
+        if (removeLabels != null) {
+            for (String l : removeLabels) {
+                if (l != null && !l.isBlank()) labelOps.add(Map.of("remove", l));
+            }
+        }
+        if (labelOps.isEmpty()) return;
+
+        Map<String, Object> body = Map.of("update", Map.of("labels", labelOps));
+
+        client.put()
+                .uri(JIRA_API_BASE + "/{cloudId}/rest/api/3/issue/{issueKey}", cloudId, issueKey)
+                .header("Content-Type", "application/json")
+                .body(body)
                 .retrieve()
                 .toBodilessEntity();
     }

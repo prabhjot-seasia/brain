@@ -78,6 +78,36 @@ class PrCreationServiceTest {
     }
 
     @Test
+    @DisplayName("createPullRequest with jiraIssueKey prefixes the title with [KEY]")
+    void createPrWithJiraKey() {
+        when(gitHubClient.getDefaultBranchSha("owner", "repo", "main")).thenReturn("sha");
+        when(gitHubClient.createPullRequest(eq("owner"), eq("repo"), anyString(), anyString(), anyString(), eq("main")))
+                .thenReturn(new GitHubClient.PullRequestResult(1, "url"));
+
+        service.createPullRequest("https://github.com/owner/repo", "main",
+                Map.of("f.java", "c"), "Add CSV export", "body", "ASSURE-123");
+
+        verify(gitHubClient).createPullRequest(eq("owner"), eq("repo"),
+                argThat(title -> title.startsWith("[ASSURE-123] brain: ")),
+                anyString(), anyString(), eq("main"));
+    }
+
+    @Test
+    @DisplayName("createPullRequest with null jiraIssueKey keeps the legacy 'brain:' prefix")
+    void createPrWithoutJiraKey() {
+        when(gitHubClient.getDefaultBranchSha("owner", "repo", "main")).thenReturn("sha");
+        when(gitHubClient.createPullRequest(eq("owner"), eq("repo"), anyString(), anyString(), anyString(), eq("main")))
+                .thenReturn(new GitHubClient.PullRequestResult(1, "url"));
+
+        service.createPullRequest("https://github.com/owner/repo", "main",
+                Map.of("f.java", "c"), "Add CSV export", "body", null);
+
+        verify(gitHubClient).createPullRequest(eq("owner"), eq("repo"),
+                argThat(title -> title.startsWith("brain: ") && !title.startsWith("[")),
+                anyString(), anyString(), eq("main"));
+    }
+
+    @Test
     @DisplayName("createPullRequest truncates long plan summary in PR title")
     void createPrTruncatesTitle() {
         when(gitHubClient.getDefaultBranchSha("owner", "repo", "main")).thenReturn("sha");

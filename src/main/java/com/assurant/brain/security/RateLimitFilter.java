@@ -44,7 +44,8 @@ public class RateLimitFilter extends OncePerRequestFilter {
      */
     private static final String[] OBSERVATION_PATHS = {
             "/api/v1/jobs",
-            "/actuator"
+            "/actuator",
+            "/api/v1/webhooks"
     };
 
     private final Map<String, Bucket> buckets = new ConcurrentHashMap<>();

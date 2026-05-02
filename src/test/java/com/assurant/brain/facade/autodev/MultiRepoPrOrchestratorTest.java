@@ -70,7 +70,7 @@ class MultiRepoPrOrchestratorTest {
     @Test
     @DisplayName("createBatch returns COMPLETED when every repo succeeds")
     void allReposSucceed() {
-        when(prCreationService.createPullRequest(anyString(), anyString(), anyMap(), anyString(), anyString()))
+        when(prCreationService.createPullRequest(anyString(), anyString(), anyMap(), anyString(), anyString(), org.mockito.ArgumentMatchers.nullable(String.class)))
                 .thenReturn(new PrCreationService.PrResult("brain/codegen-1", 1, "url1"))
                 .thenReturn(new PrCreationService.PrResult("brain/codegen-2", 2, "url2"));
 
@@ -87,7 +87,7 @@ class MultiRepoPrOrchestratorTest {
     @Test
     @DisplayName("createBatch returns PARTIAL when one repo fails at PR_CREATE")
     void oneRepoFails() {
-        when(prCreationService.createPullRequest(anyString(), anyString(), anyMap(), anyString(), anyString()))
+        when(prCreationService.createPullRequest(anyString(), anyString(), anyMap(), anyString(), anyString(), org.mockito.ArgumentMatchers.nullable(String.class)))
                 .thenReturn(new PrCreationService.PrResult("brain/codegen-1", 1, "url1"))
                 .thenThrow(new RuntimeException("github 500"));
 
@@ -107,7 +107,7 @@ class MultiRepoPrOrchestratorTest {
     @Test
     @DisplayName("createBatch returns FAILED when every repo fails")
     void allReposFail() {
-        when(prCreationService.createPullRequest(anyString(), anyString(), anyMap(), anyString(), anyString()))
+        when(prCreationService.createPullRequest(anyString(), anyString(), anyMap(), anyString(), anyString(), org.mockito.ArgumentMatchers.nullable(String.class)))
                 .thenThrow(new RuntimeException("down"));
 
         MultiRepoPrResult result = orchestrator.createBatch(UUID.randomUUID(), List.of(
@@ -129,7 +129,7 @@ class MultiRepoPrOrchestratorTest {
     @Test
     @DisplayName("PerRepoResult.failed carries failureStage name")
     void perRepoFailureStage() {
-        when(prCreationService.createPullRequest(anyString(), anyString(), anyMap(), anyString(), anyString()))
+        when(prCreationService.createPullRequest(anyString(), anyString(), anyMap(), anyString(), anyString(), org.mockito.ArgumentMatchers.nullable(String.class)))
                 .thenThrow(new RuntimeException("github down"));
 
         MultiRepoPrResult result = orchestrator.createBatch(UUID.randomUUID(), List.of(

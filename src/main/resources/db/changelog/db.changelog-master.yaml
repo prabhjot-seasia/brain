@@ -39,3 +39,5 @@ databaseChangeLog:
       file: db/changelog/versions/2026/26.18/ddl_changelog.yaml
   - include:
       file: db/changelog/versions/2026/26.19/ddl_changelog.yaml
+  - include:
+      file: db/changelog/versions/2026/26.20/ddl_changelog.yaml

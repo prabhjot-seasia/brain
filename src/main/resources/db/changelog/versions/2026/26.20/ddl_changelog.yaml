@@ -1,0 +1,92 @@
+databaseChangeLog:
+  - changeSet:
+      id: BRAIN-020.01
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: jira_issue_runs
+      changes:
+        - createTable:
+            tableName: jira_issue_runs
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: issue_key
+                  type: varchar(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: state
+                  type: varchar(40)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: session_id
+                  type: uuid
+                  constraints:
+                    nullable: true
+              - column:
+                  name: pr_batch_id
+                  type: uuid
+                  constraints:
+                    nullable: true
+              - column:
+                  name: affinity_project_ids
+                  type: jsonb
+                  constraints:
+                    nullable: true
+              - column:
+                  name: last_label
+                  type: varchar(40)
+                  constraints:
+                    nullable: true
+              - column:
+                  name: last_transition_at
+                  type: timestamp with time zone
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp with time zone
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+        - addForeignKeyConstraint:
+            baseTableName: jira_issue_runs
+            baseColumnNames: session_id
+            constraintName: fk_jira_issue_runs_session
+            referencedTableName: clarification_sessions
+            referencedColumnNames: id
+            onDelete: SET NULL
+        - sql:
+            sql: >
+              CREATE UNIQUE INDEX uq_jira_issue_runs_issue
+                ON jira_issue_runs (issue_key)
+            rollback: DROP INDEX IF EXISTS uq_jira_issue_runs_issue
+        - sql:
+            sql: >
+              CREATE INDEX idx_jira_issue_runs_state
+                ON jira_issue_runs (state)
+                WHERE state <> 'IDLE'
+            rollback: DROP INDEX IF EXISTS idx_jira_issue_runs_state
+        - createIndex:
+            tableName: jira_issue_runs
+            indexName: idx_jira_issue_runs_session
+            columns:
+              - column:
+                  name: session_id

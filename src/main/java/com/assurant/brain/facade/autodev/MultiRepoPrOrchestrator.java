@@ -30,7 +30,13 @@ import java.util.concurrent.Executor;
 public class MultiRepoPrOrchestrator {
 
     public record RepoTarget(String projectId, String repoUrl, String baseBranch,
-                              Map<String, String> files, String planSummary) {}
+                              Map<String, String> files, String planSummary,
+                              String jiraIssueKey) {
+        public RepoTarget(String projectId, String repoUrl, String baseBranch,
+                           Map<String, String> files, String planSummary) {
+            this(projectId, repoUrl, baseBranch, files, planSummary, null);
+        }
+    }
 
     private final PrCreationService prCreationService;
     private final PullRequestRecordRepository prRecordRepository;
@@ -128,7 +134,8 @@ public class MultiRepoPrOrchestrator {
             String prBody = prAnnotationsBuilder.renderPrBody(
                     target.projectId(), reviewedFiles, target.planSummary());
             PrCreationService.PrResult pr = prCreationService.createPullRequest(
-                    target.repoUrl(), target.baseBranch(), reviewedFiles, target.planSummary(), prBody);
+                    target.repoUrl(), target.baseBranch(), reviewedFiles, target.planSummary(),
+                    prBody, target.jiraIssueKey());
 
             record.setBranchName(pr.branchName());
             record.setPrNumber(pr.prNumber());

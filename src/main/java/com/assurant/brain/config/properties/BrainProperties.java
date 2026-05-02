@@ -37,7 +37,8 @@ public record BrainProperties(
 
     public record GitHub(String token, String apiBaseUrl, int maxSelfReviewIterations) {}
 
-    public record Jira(String oauthClientId, String oauthClientSecret, String oauthRedirectUri, String tokenEncryptionKey) {}
+    public record Jira(String oauthClientId, String oauthClientSecret, String oauthRedirectUri, String tokenEncryptionKey,
+                        String webhookSecret, String labelPrefix, String connectedUserId) {}
 
     public record Intake(long maxFileSizeMb) {}
 
