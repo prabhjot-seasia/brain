@@ -124,7 +124,12 @@ public class UISteps {
             java.util.Map.entry("Learning", "/learning"),
             java.util.Map.entry("Conventions", "/conventions"),
             java.util.Map.entry("Rule Packs", "/rulepacks"),
-            java.util.Map.entry("/rulepacks", "/rulepacks")
+            java.util.Map.entry("/rulepacks", "/rulepacks"),
+            java.util.Map.entry("Token Usage", "/tokens"),
+            java.util.Map.entry("Avengers", "/avengers"),
+            java.util.Map.entry("HAWKEYE", "/security"),
+            java.util.Map.entry("ORACLE Budget", "/oracle"),
+            java.util.Map.entry("Architecture", "/architecture")
     );
 
     @When("I navigate to the {string} page via sidebar")

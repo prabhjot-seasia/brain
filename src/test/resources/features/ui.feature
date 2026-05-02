@@ -96,6 +96,71 @@ Feature: Project Brain Admin UI
     Then I do not see an HTTP 500 error toast or alert
     And the browser console has no API requests that returned 500
 
+  # ── Pages without prior @ui coverage — load + clean console ─────────
+
+  Scenario: Token Usage page loads without HTTP 500
+    When I navigate to the "Token Usage" page via sidebar
+    Then I do not see an HTTP 500 error toast or alert
+    And the browser console has no API requests that returned 500
+
+  Scenario: Token Usage page does not redirect away
+    When I navigate to the "Token Usage" page via sidebar
+    Then the URL path is "/tokens"
+
+  Scenario: Pull Requests page loads without HTTP 500
+    When I navigate to the "Pull Requests" page via sidebar
+    Then I do not see an HTTP 500 error toast or alert
+    And the browser console has no API requests that returned 500
+
+  Scenario: Pull Requests page does not redirect away
+    When I navigate to the "Pull Requests" page via sidebar
+    Then the URL path is "/prs"
+
+  Scenario: Avengers page loads without HTTP 500
+    When I navigate to the "Avengers" page via sidebar
+    Then I do not see an HTTP 500 error toast or alert
+    And the browser console has no API requests that returned 500
+
+  Scenario: Avengers page does not redirect away
+    When I navigate to the "Avengers" page via sidebar
+    Then the URL path is "/avengers"
+
+  Scenario: HAWKEYE page loads without HTTP 500
+    When I navigate to the "HAWKEYE" page via sidebar
+    Then I do not see an HTTP 500 error toast or alert
+    And the browser console has no API requests that returned 500
+
+  Scenario: HAWKEYE page does not redirect away
+    When I navigate to the "HAWKEYE" page via sidebar
+    Then the URL path is "/security"
+
+  Scenario: ORACLE Budget page loads without HTTP 500
+    When I navigate to the "ORACLE Budget" page via sidebar
+    Then I do not see an HTTP 500 error toast or alert
+    And the browser console has no API requests that returned 500
+
+  Scenario: ORACLE Budget page does not redirect away
+    When I navigate to the "ORACLE Budget" page via sidebar
+    Then the URL path is "/oracle"
+
+  Scenario: Requirement Intake (Analyze) page does not surface HTTP 500
+    When I navigate to the "Analyze" page via sidebar
+    Then I do not see an HTTP 500 error toast or alert
+    And the browser console has no API requests that returned 500
+
+  Scenario: Requirement Intake page does not redirect away
+    When I navigate to the "Analyze" page via sidebar
+    Then the URL path is "/analyze"
+
+  Scenario: Architecture page loads without HTTP 500
+    When I navigate to the "Architecture" page via sidebar
+    Then I do not see an HTTP 500 error toast or alert
+    And the browser console has no API requests that returned 500
+
+  Scenario: Architecture page does not redirect away
+    When I navigate to the "Architecture" page via sidebar
+    Then the URL path is "/architecture"
+
   # ── Sidebar Navigation ──────────────────────────────────────────────
 
   Scenario: Sidebar highlights active page
