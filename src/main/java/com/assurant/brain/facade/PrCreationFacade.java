@@ -1,7 +1,7 @@
 package com.assurant.brain.facade;
 
 import com.assurant.brain.codegen.CodeGeneratorService;
-import com.assurant.brain.codegen.PrDescriptionRenderer;
+import com.assurant.brain.codegen.PrAnnotationsBuilder;
 import com.assurant.brain.codegen.SelfReviewLoop;
 import com.assurant.brain.config.properties.BrainProperties;
 import com.assurant.brain.dao.ClarificationSessionRepository;
@@ -33,7 +33,7 @@ public class PrCreationFacade {
     private final PullRequestRecordRepository prRecordRepository;
     private final BrainProperties brainProperties;
     private final ObjectMapper objectMapper;
-    private final PrDescriptionRenderer prDescriptionRenderer;
+    private final PrAnnotationsBuilder prAnnotationsBuilder;
 
     @Transactional
     public PullRequestRecord createPr(UUID sessionId, String repoUrl, String baseBranch) {
@@ -76,18 +76,8 @@ public class PrCreationFacade {
             prRecordRepository.save(record);
 
             String planSummary = extractPlanSummary(session);
-            String prBody = prDescriptionRenderer.render(new PrDescriptionRenderer.PrAnnotations(
-                    Map.of(),
-                    generatedFiles,
-                    java.util.Set.of(),
-                    java.util.List.of("@RequiredArgsConstructor", "@Log4j2 not @Slf4j", "no comments",
-                            "no @Autowired field injection", "no wildcard imports"),
-                    null,
-                    java.util.List.of(),
-                    0,
-                    0,
-                    planSummary,
-                    planSummary));
+            String prBody = prAnnotationsBuilder.renderPrBody(
+                    session.getProjectId(), generatedFiles, planSummary);
             PrCreationService.PrResult prResult = prCreationService.createPullRequest(
                     repoUrl, baseBranch, generatedFiles, planSummary, prBody);
 

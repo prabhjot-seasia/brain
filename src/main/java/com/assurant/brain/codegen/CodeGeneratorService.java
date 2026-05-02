@@ -83,6 +83,8 @@ public class CodeGeneratorService {
         String symbolDictionary = symbolDictionaryBuilder.build(projectId)
                 .renderForPrompt(SYMBOL_DICTIONARY_MAX_CHARS);
         String styleSection = buildStyleSection(projectId, requirement);
+        String imitationSection = adaptivePromptBuilder.buildImitationSection(
+                projectId, detectTaskType(planJson, requirement));
 
         Prompt prompt = new Prompt(List.of(
                 new SystemMessage(SYSTEM_PROMPT),
@@ -103,10 +105,11 @@ public class CodeGeneratorService {
                         --- PROJECT CONVENTIONS ---
                         %s
                         %s
+                        %s
 
                         Generate the complete file contents as JSON now.
                         """.formatted(projectId, planJson, codeContext, symbolDictionary,
-                                styleSection, conventions, adaptiveConventions))
+                                styleSection, conventions, adaptiveConventions, imitationSection))
         ));
 
         long startMs = System.currentTimeMillis();
@@ -195,6 +198,26 @@ public class CodeGeneratorService {
                                 b.eq("projectId", projectId),
                                 b.eq("sourceType", "CODE")).build())
                         .build());
+    }
+
+    private ImitationCorpusBuilder.TaskType detectTaskType(String planJson, String requirement) {
+        String haystack = ((planJson == null ? "" : planJson) + " " + (requirement == null ? "" : requirement))
+                .toLowerCase();
+        if (haystack.contains("liquibase") || haystack.contains("changeset") || haystack.contains("createtable")) {
+            return ImitationCorpusBuilder.TaskType.ADD_LIQUIBASE_CHANGESET;
+        }
+        if (haystack.contains("@restcontroller") || haystack.contains("@getmapping")
+                || haystack.contains("@postmapping") || haystack.contains("endpoint")) {
+            return ImitationCorpusBuilder.TaskType.ADD_ENDPOINT;
+        }
+        if (haystack.contains("test") && (haystack.contains("@test") || haystack.contains("displayname")
+                || haystack.contains("assertthat"))) {
+            return ImitationCorpusBuilder.TaskType.ADD_TEST;
+        }
+        if (haystack.contains("service") || haystack.contains("@service")) {
+            return ImitationCorpusBuilder.TaskType.EDIT_SERVICE;
+        }
+        return ImitationCorpusBuilder.TaskType.GENERIC;
     }
 
     private String buildStyleSection(String projectId, String requirement) {

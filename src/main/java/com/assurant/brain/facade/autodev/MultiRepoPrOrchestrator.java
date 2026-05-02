@@ -1,5 +1,6 @@
 package com.assurant.brain.facade.autodev;
 
+import com.assurant.brain.codegen.PrAnnotationsBuilder;
 import com.assurant.brain.codegen.SelfReviewLoop;
 import com.assurant.brain.config.properties.BrainProperties;
 import com.assurant.brain.dao.PrBatchRepository;
@@ -36,6 +37,7 @@ public class MultiRepoPrOrchestrator {
     private final PrBatchRepository prBatchRepository;
     private final SelfReviewLoop selfReviewLoop;
     private final BrainProperties brainProperties;
+    private final PrAnnotationsBuilder prAnnotationsBuilder;
 
     @Qualifier("brainLlmExecutor")
     private final Executor brainLlmExecutor;
@@ -123,8 +125,10 @@ public class MultiRepoPrOrchestrator {
             record.setStatus(PrStatus.CREATING);
             prRecordRepository.save(record);
 
+            String prBody = prAnnotationsBuilder.renderPrBody(
+                    target.projectId(), reviewedFiles, target.planSummary());
             PrCreationService.PrResult pr = prCreationService.createPullRequest(
-                    target.repoUrl(), target.baseBranch(), reviewedFiles, target.planSummary());
+                    target.repoUrl(), target.baseBranch(), reviewedFiles, target.planSummary(), prBody);
 
             record.setBranchName(pr.branchName());
             record.setPrNumber(pr.prNumber());

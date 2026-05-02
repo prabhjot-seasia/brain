@@ -55,11 +55,13 @@ class PrCreationFacadeTest {
         var github = new BrainProperties.GitHub("token", "https://api.github.com", 3);
         var props = new BrainProperties(null, null, null, null, github, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
 
+        var annotationsBuilder = mock(com.assurant.brain.codegen.PrAnnotationsBuilder.class);
+        when(annotationsBuilder.renderPrBody(any(), anyMap(), anyString())).thenReturn("body");
         facade = new PrCreationFacade(
                 codeGeneratorService, selfReviewLoop, prCreationService,
                 sessionRepository, prRecordRepository,
                 props, new ObjectMapper(),
-                new com.assurant.brain.codegen.PrDescriptionRenderer());
+                annotationsBuilder);
     }
 
     @Test

@@ -61,14 +61,16 @@ class MultiRepoPrOrchestratorTest {
         when(selfReviewLoop.run(any(PullRequestRecord.class), anyMap(), anyString(), anyInt()))
                 .thenAnswer(inv -> inv.getArgument(1));
 
+        var annotationsBuilder = mock(com.assurant.brain.codegen.PrAnnotationsBuilder.class);
+        when(annotationsBuilder.renderPrBody(anyString(), anyMap(), anyString())).thenReturn("body");
         orchestrator = new MultiRepoPrOrchestrator(prCreationService, prRecordRepository,
-                prBatchRepository, selfReviewLoop, props, Runnable::run);
+                prBatchRepository, selfReviewLoop, props, annotationsBuilder, Runnable::run);
     }
 
     @Test
     @DisplayName("createBatch returns COMPLETED when every repo succeeds")
     void allReposSucceed() {
-        when(prCreationService.createPullRequest(anyString(), anyString(), anyMap(), anyString()))
+        when(prCreationService.createPullRequest(anyString(), anyString(), anyMap(), anyString(), anyString()))
                 .thenReturn(new PrCreationService.PrResult("brain/codegen-1", 1, "url1"))
                 .thenReturn(new PrCreationService.PrResult("brain/codegen-2", 2, "url2"));
 
@@ -85,7 +87,7 @@ class MultiRepoPrOrchestratorTest {
     @Test
     @DisplayName("createBatch returns PARTIAL when one repo fails at PR_CREATE")
     void oneRepoFails() {
-        when(prCreationService.createPullRequest(anyString(), anyString(), anyMap(), anyString()))
+        when(prCreationService.createPullRequest(anyString(), anyString(), anyMap(), anyString(), anyString()))
                 .thenReturn(new PrCreationService.PrResult("brain/codegen-1", 1, "url1"))
                 .thenThrow(new RuntimeException("github 500"));
 
@@ -105,7 +107,7 @@ class MultiRepoPrOrchestratorTest {
     @Test
     @DisplayName("createBatch returns FAILED when every repo fails")
     void allReposFail() {
-        when(prCreationService.createPullRequest(anyString(), anyString(), anyMap(), anyString()))
+        when(prCreationService.createPullRequest(anyString(), anyString(), anyMap(), anyString(), anyString()))
                 .thenThrow(new RuntimeException("down"));
 
         MultiRepoPrResult result = orchestrator.createBatch(UUID.randomUUID(), List.of(
@@ -127,7 +129,7 @@ class MultiRepoPrOrchestratorTest {
     @Test
     @DisplayName("PerRepoResult.failed carries failureStage name")
     void perRepoFailureStage() {
-        when(prCreationService.createPullRequest(anyString(), anyString(), anyMap(), anyString()))
+        when(prCreationService.createPullRequest(anyString(), anyString(), anyMap(), anyString(), anyString()))
                 .thenThrow(new RuntimeException("github down"));
 
         MultiRepoPrResult result = orchestrator.createBatch(UUID.randomUUID(), List.of(
