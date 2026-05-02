@@ -4,9 +4,12 @@ import com.assurant.brain.security.SecurityUtils;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.OffsetDateTime;
@@ -26,20 +29,47 @@ public class AsyncJobService {
     private final JobEventPublisher eventPublisher;
     private final ObjectMapper objectMapper;
 
-    @Transactional
+    @Autowired
+    @Lazy
+    private AsyncJobService self;
+
     public AsyncJob startOrAttach(String jobType, String targetKind, String targetId, String projectId) {
         if (jobType == null || jobType.isBlank()
                 || targetKind == null || targetKind.isBlank()
                 || targetId == null || targetId.isBlank()) {
             throw new IllegalArgumentException("jobType, targetKind, targetId are required");
         }
-        Optional<AsyncJobEntity> existing = repository
-                .findFirstByJobTypeAndTargetKindAndTargetIdAndStatusIn(jobType, targetKind, targetId, IN_FLIGHT);
+        Optional<AsyncJob> existing = self.findInFlight(jobType, targetKind, targetId);
         if (existing.isPresent()) {
             log.info("AsyncJob attach jobType={} target={}/{} existing={}",
-                    jobType, targetKind, targetId, existing.get().getId());
-            return AsyncJob.fromEntity(existing.get(), true);
+                    jobType, targetKind, targetId, existing.get().id());
+            return existing.get();
         }
+        try {
+            return self.insertNewJob(jobType, targetKind, targetId, projectId);
+        } catch (DataIntegrityViolationException raceLost) {
+            Optional<AsyncJob> peer = self.findInFlight(jobType, targetKind, targetId);
+            if (peer.isPresent()) return peer.get();
+            try {
+                return self.insertNewJob(jobType, targetKind, targetId, projectId);
+            } catch (DataIntegrityViolationException stillRacing) {
+                return self.findInFlight(jobType, targetKind, targetId)
+                        .orElseThrow(() -> new IllegalStateException(
+                                "race-lost twice but no in-flight peer found for "
+                                        + jobType + "/" + targetKind + "/" + targetId, stillRacing));
+            }
+        }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW, readOnly = true)
+    public Optional<AsyncJob> findInFlight(String jobType, String targetKind, String targetId) {
+        return repository
+                .findFirstByJobTypeAndTargetKindAndTargetIdAndStatusIn(jobType, targetKind, targetId, IN_FLIGHT)
+                .map(e -> AsyncJob.fromEntity(e, true));
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public AsyncJob insertNewJob(String jobType, String targetKind, String targetId, String projectId) {
         AsyncJobEntity entity = new AsyncJobEntity();
         entity.setJobType(jobType);
         entity.setTargetKind(targetKind);
@@ -47,31 +77,10 @@ public class AsyncJobService {
         entity.setProjectId(projectId);
         entity.setStatus(AsyncJobStatus.QUEUED);
         entity.setRequestedBy(SecurityUtils.currentUserId());
-        try {
-            AsyncJobEntity saved = repository.saveAndFlush(entity);
-            log.info("AsyncJob queued id={} jobType={} target={}/{} project={}",
-                    saved.getId(), jobType, targetKind, targetId, projectId);
-            return AsyncJob.fromEntity(saved, false);
-        } catch (DataIntegrityViolationException raceLost) {
-            Optional<AsyncJobEntity> inFlight = repository
-                    .findFirstByJobTypeAndTargetKindAndTargetIdAndStatusIn(jobType, targetKind, targetId, IN_FLIGHT);
-            if (inFlight.isPresent()) {
-                log.info("AsyncJob race-lost; attached to in-flight {}", inFlight.get().getId());
-                return AsyncJob.fromEntity(inFlight.get(), true);
-            }
-            entity.setId(null);
-            try {
-                AsyncJobEntity saved = repository.saveAndFlush(entity);
-                log.info("AsyncJob race-resolved (peer terminated); queued id={}", saved.getId());
-                return AsyncJob.fromEntity(saved, false);
-            } catch (DataIntegrityViolationException stillRacing) {
-                AsyncJobEntity now = repository
-                        .findFirstByJobTypeAndTargetKindAndTargetIdAndStatusIn(jobType, targetKind, targetId, IN_FLIGHT)
-                        .orElseThrow(() -> new IllegalStateException(
-                                "race-lost twice for " + jobType + "/" + targetKind + "/" + targetId, stillRacing));
-                return AsyncJob.fromEntity(now, true);
-            }
-        }
+        AsyncJobEntity saved = repository.saveAndFlush(entity);
+        log.info("AsyncJob queued id={} jobType={} target={}/{} project={}",
+                saved.getId(), jobType, targetKind, targetId, projectId);
+        return AsyncJob.fromEntity(saved, false);
     }
 
     @Transactional

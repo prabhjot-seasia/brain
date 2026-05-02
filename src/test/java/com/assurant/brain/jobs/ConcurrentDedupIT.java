@@ -79,10 +79,15 @@ class ConcurrentDedupIT extends BrainApplicationTests {
         assertThat(done.await(20, TimeUnit.SECONDS)).as("all threads finished").isTrue();
         pool.shutdown();
 
-        assertThat(newCount.get() + attachedCount.get() + errorCount.get())
-                .as("All threads accounted for")
-                .isEqualTo(parallelism);
-        assertThat(newCount.get()).as("At least one caller is the true winner").isGreaterThanOrEqualTo(1);
+        assertThat(errorCount.get())
+                .as("No caller should see an unhandled exception after the race-recovery fix")
+                .isZero();
+        assertThat(newCount.get())
+                .as("Exactly one caller wins the insert; all others must attach")
+                .isEqualTo(1);
+        assertThat(attachedCount.get())
+                .as("All non-winners must report attachedToExisting=true")
+                .isEqualTo(parallelism - 1);
 
         List<AsyncJobEntity> rows = repository.findByProjectIdOrderByCreatedAtDesc(PROJECT_ID,
                 org.springframework.data.domain.PageRequest.of(0, 50));
@@ -91,16 +96,16 @@ class ConcurrentDedupIT extends BrainApplicationTests {
                 .filter(r -> JOB_TYPE.equals(r.getJobType()) && TARGET_ID.equals(r.getTargetId()))
                 .count();
         assertThat(inFlight)
-                .as("Partial unique index uq_async_jobs_inflight must permit at most 1 in-flight row per (jobType,targetKind,targetId)")
+                .as("Partial unique index permits at most 1 in-flight row per (jobType,targetKind,targetId)")
                 .isEqualTo(1);
 
         java.util.UUID committedId = rows.stream()
                 .filter(r -> JOB_TYPE.equals(r.getJobType()) && TARGET_ID.equals(r.getTargetId())
                         && (r.getStatus() == AsyncJobStatus.QUEUED || r.getStatus() == AsyncJobStatus.RUNNING))
                 .findFirst().orElseThrow().getId();
-        assertThat(winnerJobId.get())
-                .as("At least one caller's reported jobId matches the committed in-flight row")
-                .isNotNull();
-        assertThat(committedId).isNotNull();
+        assertThat(seenIds.stream().distinct().toList())
+                .as("Every caller must have seen the same committed jobId — no ghost ids")
+                .containsExactly(committedId);
+        assertThat(winnerJobId.get()).isEqualTo(committedId);
     }
 }

@@ -35,6 +35,7 @@ class AsyncJobServiceTest {
         repository = mock(AsyncJobRepository.class);
         publisher = mock(JobEventPublisher.class);
         service = new AsyncJobService(repository, publisher, new ObjectMapper());
+        org.springframework.test.util.ReflectionTestUtils.setField(service, "self", service);
         when(repository.saveAndFlush(any(AsyncJobEntity.class))).thenAnswer(inv -> {
             AsyncJobEntity e = inv.getArgument(0);
             if (e.getId() == null) e.setId(UUID.randomUUID());

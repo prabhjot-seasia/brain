@@ -9,9 +9,9 @@ AI-powered engineering platform that ingests your codebases, understands your co
 ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16%20%2B%20pgvector-336791)
 ![Neo4j](https://img.shields.io/badge/Neo4j-5-008CC1)
 ![Redis](https://img.shields.io/badge/Redis-cache-DC382D)
-![Backend Tests](https://img.shields.io/badge/backend%20tests-1090%2B-brightgreen)
+![Backend Tests](https://img.shields.io/badge/backend%20tests-1238%2B-brightgreen)
 ![Frontend Tests](https://img.shields.io/badge/frontend%20tests-128-brightgreen)
-![BDD UI](https://img.shields.io/badge/bdd%20ui%20(real%20chrome)-48%20scenarios-brightgreen)
+![BDD UI](https://img.shields.io/badge/bdd%20ui%20(real%20chrome)-96%20scenarios-brightgreen)
 ![Coverage Gate](https://img.shields.io/badge/coverage%20gate-90%25-brightgreen)
 
 ---
