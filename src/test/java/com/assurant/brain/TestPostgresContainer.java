@@ -9,7 +9,8 @@ public final class TestPostgresContainer {
                     .withDatabaseName("brain")
                     .withUsername("brain")
                     .withPassword("brain_local")
-                    .withInitScript("init-pgvector.sql");
+                    .withInitScript("init-pgvector.sql")
+                    .withCommand("postgres", "-c", "max_connections=400");
 
     static {
         INSTANCE.start();
