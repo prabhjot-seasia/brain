@@ -87,6 +87,21 @@ These rules exist because Phase C shipped 500-bleeds-to-UI, stale FE response ty
 
 Skipping any of #1–#6 on a PR that introduces a new heavy op or async-job migration is `BLOCKED`. Skipping #7 on a deploy is `BLOCKED`. The "we'll add the test later" pattern is what produced the 500-in-browser regression, and "later" never came until the user hit it. No exceptions.
 
+### 2.5 — Anti-hallucination + anti-scope-creep enforcement (UX-Q4 hard rules)
+
+These rules exist because LLM-emitted code routinely calls methods that don't exist, rewrites half a file when asked to fix one bug, and reads non-human compared to the rest of the codebase. UX-Q4 ships infrastructure to catch all three; THANOS BLOCKS on any new heavy-op gen path that bypasses any of:
+
+| # | Check | Where | Pass criterion |
+|---|---|---|---|
+| 1 | Generated code goes through `SymbolGroundingValidator` | `EditOrchestrator.runSymbolGrounding` invocation | Every plan-node application calls it; failures route to retry, not PR creation |
+| 2 | Plan node carries an `EditBoundary` | `PlanNode.boundary` field populated by planner | Boundary present; `EditBoundaryEnforcer` rejects out-of-allowlist files, denylisted symbols, ratio over `maxEditRatioPct` |
+| 3 | Sandbox compile is mandatory under autodev | `brain.autodev.require-sandbox=true` in cloud config | Compile failures block PR creation; symbol-grounding failures block PR creation even when compile passes |
+| 4 | MIRAGE runs in the Avenger panel for any code-emitting flow | `AvengerType.MIRAGE` included in `runFullReview` | MIRAGE verdict mapped to `AvengerVerdict`; `REWRITE_TO_MATCH_HOUSE_STYLE` short-circuits PR creation |
+| 5 | PR body uses `PrDescriptionRenderer`, not LLM prose | `PrCreationFacade.createPr` calls `prDescriptionRenderer.render` | 7 structured sections present (Scope, Read-only refs, Conventions, Style fingerprint, Symbol grounding, Blast radius, Test coverage delta, Rationale) |
+| 6 | Adaptive prompts include in-project few-shots | `AdaptivePromptBuilder.buildAdaptiveSection` calls `imitationCorpusBuilder.renderForPrompt` | Few-shot block emitted when project has CODE chunks; no hardcoded `ENFORCEMENT_EXAMPLES`-only output |
+
+Skipping any of #1–#6 on a PR that introduces a new code-generation path is `BLOCKED`. The pattern of "we'll add MIRAGE later" or "we'll wire the boundary later" is exactly what produced the hallucination + scope-creep frustration UX-Q4 was created to fix. No exceptions.
+
 ### 2.2 — Training STRANGE
 
 STRANGE is the newest Avenger (joined 2026-04-28). THANOS owns its on-the-job training.

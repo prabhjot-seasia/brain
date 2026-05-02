@@ -52,6 +52,7 @@ public class AdaptivePromptBuilder {
     private final AvengerMemory avengerMemory;
     private final BrainProperties brainProperties;
     private final ReviewPatternNodeRepository reviewPatternNodeRepository;
+    private final ImitationCorpusBuilder imitationCorpusBuilder;
 
     public String buildAdaptiveSection(String projectId, AvengerType avenger) {
         AvengerMemorySnapshot snapshot = avengerMemory.getMemory(avenger, projectId);
@@ -140,6 +141,12 @@ public class AdaptivePromptBuilder {
         }
 
         log.info("Adaptive prompt: reinforcing {} weak conventions for project={}", weakConventions.size(), projectId);
+        section.append(imitationCorpusBuilder.renderForPrompt(
+                imitationCorpusBuilder.findExamples(projectId, ImitationCorpusBuilder.TaskType.GENERIC)));
         return section.toString();
+    }
+
+    public String buildImitationSection(String projectId, ImitationCorpusBuilder.TaskType taskType) {
+        return imitationCorpusBuilder.renderForPrompt(imitationCorpusBuilder.findExamples(projectId, taskType));
     }
 }

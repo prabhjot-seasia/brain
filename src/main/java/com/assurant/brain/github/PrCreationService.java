@@ -18,6 +18,13 @@ public class PrCreationService {
 
     public PrResult createPullRequest(String repoUrl, String baseBranch,
                                        Map<String, String> generatedFiles, String planSummary) {
+        return createPullRequest(repoUrl, baseBranch, generatedFiles, planSummary,
+                buildPrBody(generatedFiles, planSummary));
+    }
+
+    public PrResult createPullRequest(String repoUrl, String baseBranch,
+                                       Map<String, String> generatedFiles, String planSummary,
+                                       String prBody) {
         GitHubUrlParser.OwnerRepo ownerRepo = GitHubUrlParser.parse(repoUrl);
         String branchName = BRANCH_PREFIX + "codegen-" + System.currentTimeMillis();
 
@@ -36,7 +43,6 @@ public class PrCreationService {
         }
 
         String prTitle = "brain: " + truncate(planSummary, 60);
-        String prBody = buildPrBody(generatedFiles, planSummary);
 
         GitHubClient.PullRequestResult result = gitHubClient.createPullRequest(
                 ownerRepo.owner(), ownerRepo.repo(), prTitle, prBody, branchName, baseBranch

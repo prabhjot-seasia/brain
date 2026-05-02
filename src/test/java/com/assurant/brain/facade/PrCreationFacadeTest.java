@@ -58,7 +58,8 @@ class PrCreationFacadeTest {
         facade = new PrCreationFacade(
                 codeGeneratorService, selfReviewLoop, prCreationService,
                 sessionRepository, prRecordRepository,
-                props, new ObjectMapper());
+                props, new ObjectMapper(),
+                new com.assurant.brain.codegen.PrDescriptionRenderer());
     }
 
     @Test
@@ -78,7 +79,7 @@ class PrCreationFacadeTest {
         when(codeGeneratorService.generateCode(anyString(), anyString(), anyString())).thenReturn(files);
         when(selfReviewLoop.run(any(PullRequestRecord.class), anyMap(), anyString(), anyInt()))
                 .thenReturn(files);
-        when(prCreationService.createPullRequest(anyString(), anyString(), anyMap(), anyString()))
+        when(prCreationService.createPullRequest(anyString(), anyString(), anyMap(), anyString(), anyString()))
                 .thenReturn(new PrCreationService.PrResult("brain/codegen-1", 42, "https://github.com/o/r/pull/42"));
 
         PullRequestRecord result = facade.createPr(sessionId, "https://github.com/o/r", "main");
@@ -88,7 +89,7 @@ class PrCreationFacadeTest {
         assertThat(result.getPrUrl()).isEqualTo("https://github.com/o/r/pull/42");
         verify(codeGeneratorService).generateCode(anyString(), anyString(), anyString());
         verify(selfReviewLoop).run(any(PullRequestRecord.class), anyMap(), anyString(), eq(3));
-        verify(prCreationService).createPullRequest(anyString(), anyString(), anyMap(), anyString());
+        verify(prCreationService).createPullRequest(anyString(), anyString(), anyMap(), anyString(), anyString());
     }
 
     @Test
