@@ -29,6 +29,10 @@ import org.springframework.ai.chat.messages.SystemMessage;
 import org.springframework.ai.chat.messages.UserMessage;
 import org.springframework.ai.chat.model.ChatModel;
 import org.springframework.ai.chat.prompt.Prompt;
+import org.springframework.ai.document.Document;
+import org.springframework.ai.vectorstore.SearchRequest;
+import org.springframework.ai.vectorstore.VectorStore;
+import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 
@@ -62,6 +66,10 @@ public class AvengerReviewer {
     private final AdaptivePromptBuilder adaptivePromptBuilder;
     private final com.assurant.brain.graph.repository.TestRunNodeRepository testRunNodeRepository;
     private final AsyncJobService asyncJobService;
+    private final MirageReviewer mirageReviewer;
+    private final VectorStore vectorStore;
+
+    private static final int MIRAGE_BASELINE_SAMPLES = 30;
 
     @Async("brainLlmExecutor")
     public void reviewAsync(AvengerRequest request, UUID jobId) {
@@ -107,6 +115,11 @@ public class AvengerReviewer {
             verdict = stark.verdict;
             issues = stark.issues;
             summary = stark.summary;
+        } else if (request.avenger() == AvengerType.MIRAGE) {
+            MirageResult m = reviewWithMirage(request, sanitizedCode);
+            verdict = m.verdict;
+            issues = m.issues;
+            summary = m.summary;
         } else {
             LlmReviewResult llm = reviewWithLlm(request, sanitizedCode);
             verdict = llm.verdict;
@@ -271,7 +284,45 @@ public class AvengerReviewer {
         }
     }
 
+    private MirageResult reviewWithMirage(AvengerRequest request, String code) {
+        List<String> baseline = sampleProjectSource(request.projectId());
+        MirageReviewer.Report report = mirageReviewer.review(Map.of(SINGLE_FILE_KEY, code), baseline);
+        AvengerVerdict v = switch (report.verdict()) {
+            case APPROVED -> AvengerVerdict.APPROVED;
+            case FEELS_LIKE_LLM, REWRITE_TO_MATCH_HOUSE_STYLE -> AvengerVerdict.CHANGES_REQUESTED;
+        };
+        String summary = report.verdict() == MirageReviewer.Verdict.APPROVED
+                ? "MIRAGE: candidate matches house style"
+                : "MIRAGE: " + report.signals().size() + " style mismatch(es) (max " + String.format("%.1fσ", report.maxSigmaOff()) + ")";
+        return new MirageResult(v, report.signals(), summary);
+    }
+
+    private List<String> sampleProjectSource(String projectId) {
+        if (projectId == null || projectId.isBlank()) return List.of();
+        try {
+            FilterExpressionBuilder b = new FilterExpressionBuilder();
+            List<Document> docs = vectorStore.similaritySearch(SearchRequest.builder()
+                    .query("class implementation")
+                    .topK(MIRAGE_BASELINE_SAMPLES)
+                    .filterExpression(b.and(
+                            b.eq("projectId", projectId),
+                            b.eq("sourceType", "CODE")).build())
+                    .build());
+            if (docs == null || docs.isEmpty()) return List.of();
+            List<String> out = new java.util.ArrayList<>(docs.size());
+            for (Document d : docs) {
+                if (d.getText() != null && !d.getText().isBlank()) out.add(d.getText());
+            }
+            return out;
+        } catch (RuntimeException e) {
+            log.debug("MIRAGE: baseline sampling failed for project={}: {}", projectId, e.getMessage());
+            return List.of();
+        }
+    }
+
     private record StarkResult(AvengerVerdict verdict, List<String> issues, String summary) {}
+
+    private record MirageResult(AvengerVerdict verdict, List<String> issues, String summary) {}
 
     private record LlmReviewResult(AvengerVerdict verdict, List<String> issues, String summary,
                                     int tokensIn, int tokensOut) {}

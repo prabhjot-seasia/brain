@@ -2,10 +2,12 @@ package com.assurant.brain.dao;
 
 import com.assurant.brain.domain.LearningEvent;
 import com.assurant.brain.enums.AvengerType;
+import com.assurant.brain.enums.LearningEventType;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface LearningEventRepository extends JpaRepository<LearningEvent, UUID> {
@@ -20,4 +22,7 @@ public interface LearningEventRepository extends JpaRepository<LearningEvent, UU
 
     List<LearningEvent> findByAvengerAndProjectIdOrderByCreatedAtDesc(
             AvengerType avenger, String projectId, Pageable pageable);
+
+    Optional<LearningEvent> findFirstByProjectIdAndEventTypeOrderByCreatedAtDesc(
+            String projectId, LearningEventType eventType);
 }

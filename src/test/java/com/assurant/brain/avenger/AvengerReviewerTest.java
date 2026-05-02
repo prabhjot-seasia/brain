@@ -83,7 +83,9 @@ class AvengerReviewerTest {
         when(testRunRepo.findFlakyTests(any(), anyDouble(), anyInt())).thenReturn(java.util.List.of());
         reviewer = new AvengerReviewer(chatModel, new ObjectMapper(), personaLoader, repository, tracker,
                 props, railChain, ast, conv, learningRepo, memory, adaptive, testRunRepo,
-                mock(com.assurant.brain.jobs.AsyncJobService.class));
+                mock(com.assurant.brain.jobs.AsyncJobService.class),
+                new MirageReviewer(new com.assurant.brain.codegen.StyleFingerprintBuilder()),
+                mock(org.springframework.ai.vectorstore.VectorStore.class));
     }
 
     @Test
