@@ -51,9 +51,10 @@ class CodeGeneratorServiceTest {
         var aiderApplier = new com.assurant.brain.codegen.AiderDiffApplier();
         var symbolDictionaryBuilder = mock(SymbolDictionaryBuilder.class);
         when(symbolDictionaryBuilder.build(anyString())).thenReturn(SymbolDictionary.EMPTY);
+        var styleFingerprintBuilder = new StyleFingerprintBuilder();
         service = new CodeGeneratorService(chatModel, vectorStore, conventionNodeRepository, props,
                 new ObjectMapper(), tracker, adaptivePromptBuilder, aiderFormatter, aiderApplier,
-                symbolDictionaryBuilder);
+                symbolDictionaryBuilder, styleFingerprintBuilder);
     }
 
     @Test

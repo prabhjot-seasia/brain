@@ -11,7 +11,8 @@ public enum AvengerType {
     ORACLE(AvengerRole.SERVICE, AvengerDomain.TOKEN_ECONOMY),
     MANTIS(AvengerRole.SERVICE, AvengerDomain.LEARNING),
     JARVIS(AvengerRole.SUPPORT, AvengerDomain.INFRASTRUCTURE),
-    THANOS(AvengerRole.SUPPORT, AvengerDomain.OVERSIGHT);
+    THANOS(AvengerRole.SUPPORT, AvengerDomain.OVERSIGHT),
+    MIRAGE(AvengerRole.SERVICE, AvengerDomain.STYLE_FIT);
 
     private final AvengerRole role;
     private final AvengerDomain domain;

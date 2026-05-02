@@ -11,5 +11,6 @@ public enum AvengerDomain {
     CODE_VALIDATION,
     LEARNING,
     PERFORMANCE,
-    OVERSIGHT
+    OVERSIGHT,
+    STYLE_FIT
 }

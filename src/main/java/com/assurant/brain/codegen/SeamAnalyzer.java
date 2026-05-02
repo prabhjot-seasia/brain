@@ -42,20 +42,36 @@ public class SeamAnalyzer {
             return SeamFlag.SAFE_SEAM;
         }
 
-        int callerCount;
-        try {
-            List<Map<String, Object>> callers =
-                    projectNodeRepository.findCallersByQualifiedName(node.targetSymbol());
-            callerCount = callers == null ? 0 : callers.size();
-        } catch (Exception e) {
-            log.warn("Seam analysis caller lookup failed for symbol={} — defaulting to SAFE_SEAM. Cause: {}",
-                    node.targetSymbol(), e.getMessage());
-            return SeamFlag.SAFE_SEAM;
-        }
+        int callerCount = findCallersOf(node.targetSymbol()).size();
 
         if (callerCount >= blastRadiusThreshold) return SeamFlag.HIGH_BLAST_RADIUS;
         if (callerCount >= 1)                    return SeamFlag.NEEDS_CHARACTERIZATION_TEST;
         return SeamFlag.SAFE_SEAM;
+    }
+
+    public record CallerSite(String projectId, String qualifiedName, String filePath) {}
+
+    public List<CallerSite> findCallersOf(String symbolFqn) {
+        if (symbolFqn == null || symbolFqn.isBlank()) return List.of();
+        try {
+            List<Map<String, Object>> rows = projectNodeRepository.findCallersByQualifiedName(symbolFqn);
+            if (rows == null) return List.of();
+            List<CallerSite> out = new ArrayList<>(rows.size());
+            for (Map<String, Object> row : rows) {
+                out.add(new CallerSite(
+                        stringOf(row.get("projectId")),
+                        stringOf(row.get("qualifiedName")),
+                        stringOf(row.get("filePath"))));
+            }
+            return out;
+        } catch (RuntimeException e) {
+            log.warn("Caller lookup failed for symbol={}: {}", symbolFqn, e.getMessage());
+            return List.of();
+        }
+    }
+
+    private String stringOf(Object value) {
+        return value == null ? null : value.toString();
     }
 
     private int resolveBlastRadiusThreshold() {

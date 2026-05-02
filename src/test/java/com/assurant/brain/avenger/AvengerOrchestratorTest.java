@@ -34,8 +34,8 @@ class AvengerOrchestratorTest {
     }
 
     @Test
-    @DisplayName("runs all 11 Avengers and aggregates verdicts")
-    void runsAllEleven() {
+    @DisplayName("runs all 12 Avengers and aggregates verdicts")
+    void runsAllTwelve() {
         when(reviewer.review(any(AvengerRequest.class))).thenAnswer(i -> {
             AvengerRequest req = i.getArgument(0);
             return new AvengerResponse(UUID.randomUUID(), req.avenger(), AvengerVerdict.APPROVED,
@@ -44,10 +44,10 @@ class AvengerOrchestratorTest {
 
         FullReviewResponse result = orchestrator.runFullReview("proj-1", "code", null);
 
-        assertThat(result.totalAvengers()).isEqualTo(11);
-        assertThat(result.approved()).isEqualTo(11);
+        assertThat(result.totalAvengers()).isEqualTo(12);
+        assertThat(result.approved()).isEqualTo(12);
         assertThat(result.overallVerdict()).isEqualTo(AvengerVerdict.APPROVED);
-        verify(reviewer, times(11)).review(any(AvengerRequest.class));
+        verify(reviewer, times(12)).review(any(AvengerRequest.class));
     }
 
     @Test

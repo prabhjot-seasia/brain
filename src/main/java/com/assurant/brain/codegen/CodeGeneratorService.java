@@ -20,6 +20,7 @@ import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.ai.vectorstore.filter.FilterExpressionBuilder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -71,6 +72,7 @@ public class CodeGeneratorService {
     private final AiderDiffFormatter aiderDiffFormatter;
     private final AiderDiffApplier aiderDiffApplier;
     private final SymbolDictionaryBuilder symbolDictionaryBuilder;
+    private final StyleFingerprintBuilder styleFingerprintBuilder;
 
     public Map<String, String> generateCode(String projectId, String planJson, String requirement) {
         log.info("Generating code for project={}", projectId);
@@ -80,6 +82,7 @@ public class CodeGeneratorService {
         String adaptiveConventions = adaptivePromptBuilder.buildAdaptiveSection(projectId);
         String symbolDictionary = symbolDictionaryBuilder.build(projectId)
                 .renderForPrompt(SYMBOL_DICTIONARY_MAX_CHARS);
+        String styleSection = buildStyleSection(projectId, requirement);
 
         Prompt prompt = new Prompt(List.of(
                 new SystemMessage(SYSTEM_PROMPT),
@@ -95,13 +98,15 @@ public class CodeGeneratorService {
                         --- PROJECT SYMBOL DICTIONARY (anti-hallucination) ---
                         %s
 
+                        --- %s
+
                         --- PROJECT CONVENTIONS ---
                         %s
                         %s
 
                         Generate the complete file contents as JSON now.
                         """.formatted(projectId, planJson, codeContext, symbolDictionary,
-                                conventions, adaptiveConventions))
+                                styleSection, conventions, adaptiveConventions))
         ));
 
         long startMs = System.currentTimeMillis();
@@ -121,9 +126,11 @@ public class CodeGeneratorService {
         String conventions = retrieveConventions(projectId);
         String symbolDictionary = symbolDictionaryBuilder.build(projectId)
                 .renderForPrompt(SYMBOL_DICTIONARY_MAX_CHARS);
+        String styleSection = buildStyleSection(projectId, changeDescription);
         String groundedConventions = conventions
                 + "\n\n--- PROJECT SYMBOL DICTIONARY (anti-hallucination) ---\n"
-                + symbolDictionary;
+                + symbolDictionary
+                + "\n\n--- " + styleSection;
         String llmOutput = aiderDiffFormatter.generateBlocks(existingContent, filePath,
                 changeDescription, groundedConventions);
         var blocks = aiderDiffApplier.parse(llmOutput);
@@ -173,19 +180,36 @@ public class CodeGeneratorService {
     }
 
     private String retrieveCodeContext(String projectId, String requirement) {
-        var b = new FilterExpressionBuilder();
         BrainProperties.Rag rag = brainProperties.rag();
+        List<Document> codeDocs = retrieveCodeDocs(projectId, requirement, rag.topKCode());
+        return ContextWindowManager.buildContext(codeDocs, List.of(), rag.maxContextTokens(), rag.docTrustWeight());
+    }
 
-        List<Document> codeDocs = vectorStore.similaritySearch(
+    private List<Document> retrieveCodeDocs(String projectId, String requirement, int topK) {
+        var b = new FilterExpressionBuilder();
+        return vectorStore.similaritySearch(
                 SearchRequest.builder()
                         .query(requirement)
-                        .topK(rag.topKCode())
+                        .topK(topK)
                         .filterExpression(b.and(
                                 b.eq("projectId", projectId),
                                 b.eq("sourceType", "CODE")).build())
                         .build());
+    }
 
-        return ContextWindowManager.buildContext(codeDocs, List.of(), rag.maxContextTokens(), rag.docTrustWeight());
+    private String buildStyleSection(String projectId, String requirement) {
+        try {
+            List<Document> sample = retrieveCodeDocs(projectId, requirement, 30);
+            if (sample == null || sample.isEmpty()) return StyleFingerprint.EMPTY.renderForPrompt();
+            List<String> contents = new ArrayList<>(sample.size());
+            for (Document d : sample) {
+                if (d.getText() != null && !d.getText().isBlank()) contents.add(d.getText());
+            }
+            return styleFingerprintBuilder.build(contents).renderForPrompt();
+        } catch (RuntimeException e) {
+            log.debug("StyleFingerprint sampling failed for project={}: {}", projectId, e.getMessage());
+            return StyleFingerprint.EMPTY.renderForPrompt();
+        }
     }
 
     private String retrieveConventions(String projectId) {
