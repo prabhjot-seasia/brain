@@ -410,6 +410,57 @@ public class UISteps {
         chrome.executeCdpCommand("Network.emulateNetworkConditions", params);
     }
 
+    // ── M5 — mobile viewport (375 × 667 = iPhone SE 2020) ──────────────
+    @When("the viewport is resized to {int} by {int}")
+    public void resizeViewport(int width, int height) {
+        if (driver instanceof ChromeDriver chrome) {
+            java.util.Map<String, Object> params = new java.util.HashMap<>();
+            params.put("width", width);
+            params.put("height", height);
+            params.put("deviceScaleFactor", 2);
+            params.put("mobile", true);
+            chrome.executeCdpCommand("Emulation.setDeviceMetricsOverride", params);
+        } else {
+            driver.manage().window().setSize(new org.openqa.selenium.Dimension(width, height));
+        }
+    }
+
+    @Then("the body width is at most {int} pixels")
+    public void bodyWidthAtMost(int max) {
+        Long width = (Long) ((org.openqa.selenium.JavascriptExecutor) driver)
+                .executeScript("return Math.max(document.body.scrollWidth, document.documentElement.scrollWidth);");
+        assertThat(width)
+                .as("Body must not horizontally overflow on a " + max + "px viewport")
+                .isLessThanOrEqualTo((long) max);
+    }
+
+    // ── M4 — a11y: aria-live regions + keyboard reachability ───────────
+    @Then("at least one element with role {string} or aria-live is present")
+    public void ariaLivePresent(String role) {
+        WebDriverWait localWait = new WebDriverWait(driver, Duration.ofSeconds(8));
+        localWait.until(d -> {
+            int total = d.findElements(By.cssSelector("[role='" + role + "']")).size()
+                    + d.findElements(By.cssSelector("[role='alert']")).size()
+                    + d.findElements(By.cssSelector("[aria-live]")).size();
+            return total >= 1;
+        });
+    }
+
+    @Then("the {string} button is reachable via keyboard")
+    public void buttonKeyboardReachable(String label) {
+        WebElement button = driver.findElement(By.xpath("//button[contains(.,'" + label + "')]"));
+        assertThat(button.getAttribute("disabled"))
+                .as("Button must not be permanently disabled to be keyboard-reachable")
+                .isNotEqualTo("true");
+        Boolean focusable = (Boolean) ((org.openqa.selenium.JavascriptExecutor) driver).executeScript(
+                "var el = arguments[0];" +
+                "var ti = el.getAttribute('tabindex');" +
+                "return el.disabled !== true && (ti === null || parseInt(ti) >= 0);", button);
+        assertThat(focusable)
+                .as("Button '" + label + "' must be focusable (tabindex>=0 and not disabled)")
+                .isTrue();
+    }
+
     @Then("I do not see a connection-lost error message")
     public void noConnectionLostError() {
         try { Thread.sleep(2500); }

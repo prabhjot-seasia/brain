@@ -188,6 +188,44 @@ Feature: Project Brain Admin UI
     And I click the "Start Ingestion" button
     Then the Notification permission was requested at least once
 
+  # ── M5 — mobile viewport (iPhone SE 2020 = 375×667) ─────────────────
+
+  Scenario: Projects page does not horizontally overflow on a 375px viewport
+    When the viewport is resized to 375 by 667
+    And I navigate to the "Projects" page via sidebar
+    Then the body width is at most 375 pixels
+
+  Scenario: Tickets page does not horizontally overflow on a 375px viewport
+    When the viewport is resized to 375 by 667
+    And I navigate to the "Tickets" page via sidebar
+    Then the body width is at most 375 pixels
+
+  Scenario: ORACLE Budget page does not horizontally overflow on a 375px viewport
+    When the viewport is resized to 375 by 667
+    And I navigate to the "ORACLE Budget" page via sidebar
+    Then the body width is at most 375 pixels
+
+  Scenario: Pull Requests page does not horizontally overflow on a 375px viewport
+    When the viewport is resized to 375 by 667
+    And I navigate to the "Pull Requests" page via sidebar
+    Then the body width is at most 375 pixels
+
+  # ── M4 — a11y: aria-live regions + keyboard reachability ────────────
+
+  Scenario: Ingest page Start Ingestion button is keyboard reachable
+    When I navigate to the "Ingest" page via sidebar
+    Then the "Start Ingestion" button is reachable via keyboard
+
+  Scenario: Projects page Ingest Project button is keyboard reachable
+    When I navigate to the "Projects" page via sidebar
+    Then the "Ingest Project" button is reachable via keyboard
+
+  Scenario: Pages with kickoff progress have an aria-live region for screen readers
+    When I navigate to the "Ingest" page via sidebar
+    And I fill in the Ingest form with project "smoke-bdd-a11y" name "smoke-bdd-a11y" repo "https://10.255.255.99/x.git"
+    And I click the "Start Ingestion" button
+    Then at least one element with role "status" or aria-live is present
+
   # ── Sidebar Navigation ──────────────────────────────────────────────
 
   Scenario: Sidebar highlights active page

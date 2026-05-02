@@ -22,7 +22,11 @@ export default function JobProgress({ jobId, onTerminal, showStatusChip = true, 
   const indeterminate = !snapshot || (status !== 'SUCCEEDED' && status !== 'PARTIAL' && status !== 'FAILED' && pct === 0)
 
   return (
-    <Box sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: compact ? 0.5 : 1 }}>
+    <Box
+        role="status"
+        aria-live="polite"
+        aria-atomic="true"
+        sx={{ width: '100%', display: 'flex', flexDirection: 'column', gap: compact ? 0.5 : 1 }}>
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
         {showStatusChip && <StatusChip status={status} />}
         <Typography variant="caption" color="text.secondary" sx={{ flex: 1, minWidth: 0 }}>
