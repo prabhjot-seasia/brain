@@ -80,6 +80,15 @@ public class GlobalExceptionHandler {
                 .body(ErrorResponse.of(400, ex.getMessage()));
     }
 
+    @ExceptionHandler(org.springframework.web.server.ResponseStatusException.class)
+    public ResponseEntity<ErrorResponse> handleResponseStatus(
+            org.springframework.web.server.ResponseStatusException ex) {
+        int status = ex.getStatusCode().value();
+        String reason = ex.getReason() != null ? ex.getReason() : ex.getMessage();
+        log.warn("ResponseStatusException: status={} reason={}", status, reason);
+        return ResponseEntity.status(status).body(ErrorResponse.of(status, reason));
+    }
+
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorResponse> handleGeneral(Exception ex) {
         log.error("Unhandled exception", ex);
