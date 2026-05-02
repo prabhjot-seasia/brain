@@ -4,9 +4,13 @@ import com.assurant.brain.codegen.CodeGeneratorService;
 import com.assurant.brain.codegen.DependencyPropagationAnalyzer;
 import com.assurant.brain.codegen.DiffApplier;
 import com.assurant.brain.codegen.DiffGenerator;
+import com.assurant.brain.codegen.EditBoundaryEnforcer;
 import com.assurant.brain.codegen.PlanGraph;
 import com.assurant.brain.codegen.PlanNode;
 import com.assurant.brain.codegen.SeamAnalyzer;
+import com.assurant.brain.codegen.SymbolDictionary;
+import com.assurant.brain.codegen.SymbolDictionaryBuilder;
+import com.assurant.brain.codegen.SymbolGroundingValidator;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.RequiredArgsConstructor;
@@ -30,6 +34,10 @@ public class EditOrchestrator {
     private final DiffApplier diffApplier;
     private final ObjectMapper objectMapper;
     private final com.assurant.brain.sandbox.SandboxValidationService sandboxValidationService;
+    private final com.assurant.brain.config.properties.BrainProperties brainProperties;
+    private final SymbolDictionaryBuilder symbolDictionaryBuilder;
+    private final SymbolGroundingValidator symbolGroundingValidator;
+    private final EditBoundaryEnforcer editBoundaryEnforcer;
 
     public EditOrchestrationResult orchestrate(String projectId, String requirement,
                                                  List<PlanNode> seedEdits) {
@@ -44,15 +52,18 @@ public class EditOrchestrator {
 
         for (PlanNode node : annotated.topologicalOrder()) {
             try {
+                Map<String, String> previousSnapshot = new HashMap<>(aggregatedFiles);
+                Map<String, String> nodeFiles;
                 if (node.derived() && node.filePath() != null && aggregatedFiles.containsKey(node.filePath())) {
                     generateViaDiff(projectId, node, aggregatedFiles);
+                    nodeFiles = aggregatedFiles;
                 } else {
-                    Map<String, String> nodeFiles =
-                            codeGeneratorService.generateCode(projectId,
-                                    serializeNodeAsPlanFragment(node, requirement),
-                                    requirement);
+                    nodeFiles = codeGeneratorService.generateCode(projectId,
+                            serializeNodeAsPlanFragment(node, requirement),
+                            requirement);
                     if (nodeFiles != null) aggregatedFiles.putAll(nodeFiles);
                 }
+                enforceBoundary(node, previousSnapshot, nodeFiles, nodeErrors);
             } catch (Exception e) {
                 String error = "node=" + node.blockId() + " (" + node.targetSymbol() + "): "
                         + e.getMessage();
@@ -61,9 +72,46 @@ public class EditOrchestrator {
             }
         }
 
+        runSymbolGrounding(projectId, aggregatedFiles, nodeErrors);
         runSandboxValidation(projectId, aggregatedFiles, nodeErrors);
 
         return new EditOrchestrationResult(projectId, annotated, aggregatedFiles, nodeErrors);
+    }
+
+    private void enforceBoundary(PlanNode node,
+                                   Map<String, String> previousSnapshot,
+                                   Map<String, String> nodeFiles,
+                                   List<String> nodeErrors) {
+        if (nodeFiles == null || nodeFiles.isEmpty()) return;
+        Map<String, String> changedOnly = new HashMap<>();
+        for (Map.Entry<String, String> entry : nodeFiles.entrySet()) {
+            String prev = previousSnapshot.get(entry.getKey());
+            if (prev == null || !prev.equals(entry.getValue())) {
+                changedOnly.put(entry.getKey(), entry.getValue());
+            }
+        }
+        if (changedOnly.isEmpty()) return;
+        var result = editBoundaryEnforcer.enforce(node.effectiveBoundary(),
+                previousSnapshot, changedOnly);
+        if (!result.ok()) {
+            log.warn("EditBoundary violations for node={} on project={}: {}",
+                    node.blockId(), node.projectId(), result.violations().size());
+            for (String v : result.violations()) {
+                nodeErrors.add("node=" + node.blockId() + ": " + v);
+            }
+        }
+    }
+
+    private void runSymbolGrounding(String projectId, Map<String, String> aggregatedFiles,
+                                     List<String> nodeErrors) {
+        if (aggregatedFiles.isEmpty()) return;
+        SymbolDictionary dict = symbolDictionaryBuilder.build(projectId);
+        var result = symbolGroundingValidator.validate(aggregatedFiles, dict);
+        if (!result.ok()) {
+            log.warn("Symbol grounding flagged {} hallucinated reference(s) for project={}",
+                    result.issues().size(), projectId);
+            result.issues().forEach(i -> nodeErrors.add("grounding: " + i));
+        }
     }
 
     private static final java.util.Set<String> BUILD_CONFIG_FILES = java.util.Set.of(
@@ -79,9 +127,24 @@ public class EditOrchestrator {
         return BUILD_CONFIG_FILES.contains(name);
     }
 
+    private boolean requireSandbox() {
+        return brainProperties.autodev() != null && brainProperties.autodev().requireSandbox();
+    }
+
+    private boolean sandboxEnabled() {
+        return brainProperties.sandbox() != null && brainProperties.sandbox().enabled();
+    }
+
     private void runSandboxValidation(String projectId, Map<String, String> aggregatedFiles,
                                        List<String> nodeErrors) {
         if (aggregatedFiles.isEmpty()) return;
+        if (requireSandbox() && !sandboxEnabled()) {
+            String error = "sandbox: brain.autodev.require-sandbox=true but brain.sandbox.enabled=false — "
+                    + "autodev pipeline refuses to ship code that has not been compile + test verified";
+            log.error("Sandbox required but disabled for project={}", projectId);
+            nodeErrors.add(error);
+            return;
+        }
         for (String key : aggregatedFiles.keySet()) {
             if (isBuildConfig(key)) {
                 String error = "sandbox: refusing to validate plan that modifies build config "
@@ -120,9 +183,17 @@ public class EditOrchestrator {
                         projectId, result.buildTool(), result.exitCode());
                 sandboxValidationService.extractFailures(result.stdout(), result.stderr())
                         .forEach(f -> nodeErrors.add("sandbox: " + f));
+                if (requireSandbox()) {
+                    nodeErrors.add("sandbox: brain.autodev.require-sandbox=true blocks PR creation "
+                            + "until compile + tests are green");
+                }
             }
         } catch (Exception e) {
             log.warn("Sandbox setup failed for project={}: {}", projectId, e.getMessage());
+            if (requireSandbox()) {
+                nodeErrors.add("sandbox: validation could not run (" + e.getMessage()
+                        + ") and brain.autodev.require-sandbox=true — refusing to ship");
+            }
         } finally {
             if (tempRoot != null) deleteRecursively(tempRoot);
         }

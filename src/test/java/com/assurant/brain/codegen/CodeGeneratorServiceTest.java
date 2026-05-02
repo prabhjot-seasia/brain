@@ -49,8 +49,11 @@ class CodeGeneratorServiceTest {
         when(adaptivePromptBuilder.buildAdaptiveSection(anyString())).thenReturn("");
         var aiderFormatter = mock(com.assurant.brain.codegen.AiderDiffFormatter.class);
         var aiderApplier = new com.assurant.brain.codegen.AiderDiffApplier();
+        var symbolDictionaryBuilder = mock(SymbolDictionaryBuilder.class);
+        when(symbolDictionaryBuilder.build(anyString())).thenReturn(SymbolDictionary.EMPTY);
         service = new CodeGeneratorService(chatModel, vectorStore, conventionNodeRepository, props,
-                new ObjectMapper(), tracker, adaptivePromptBuilder, aiderFormatter, aiderApplier);
+                new ObjectMapper(), tracker, adaptivePromptBuilder, aiderFormatter, aiderApplier,
+                symbolDictionaryBuilder);
     }
 
     @Test

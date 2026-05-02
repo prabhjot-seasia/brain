@@ -172,6 +172,7 @@ brain:
     max-projects: 5
     max-plan-nodes: 50
     blast-radius-threshold: 10
+    require-sandbox: ${BRAIN_AUTODEV_REQUIRE_SANDBOX:false}
   ci:
     webhook-secret: ${BRAIN_GITHUB_WEBHOOK_SECRET:}
     max-remediation-attempts: 3
@@ -337,6 +338,7 @@ brain:
     max-projects: 5
     max-plan-nodes: 50
     blast-radius-threshold: 10
+    require-sandbox: ${BRAIN_AUTODEV_REQUIRE_SANDBOX:false}
   ci:
     webhook-secret: ''
     max-remediation-attempts: 3

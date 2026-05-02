@@ -59,6 +59,8 @@ public class CodeGeneratorService {
             Return ONLY valid JSON — no markdown fences, no explanation text.
             """;
 
+    private static final int SYMBOL_DICTIONARY_MAX_CHARS = 4000;
+
     private final ChatModel chatModel;
     private final VectorStore vectorStore;
     private final ConventionNodeRepository conventionNodeRepository;
@@ -68,6 +70,7 @@ public class CodeGeneratorService {
     private final AdaptivePromptBuilder adaptivePromptBuilder;
     private final AiderDiffFormatter aiderDiffFormatter;
     private final AiderDiffApplier aiderDiffApplier;
+    private final SymbolDictionaryBuilder symbolDictionaryBuilder;
 
     public Map<String, String> generateCode(String projectId, String planJson, String requirement) {
         log.info("Generating code for project={}", projectId);
@@ -75,6 +78,8 @@ public class CodeGeneratorService {
         String codeContext = retrieveCodeContext(projectId, requirement);
         String conventions = retrieveConventions(projectId);
         String adaptiveConventions = adaptivePromptBuilder.buildAdaptiveSection(projectId);
+        String symbolDictionary = symbolDictionaryBuilder.build(projectId)
+                .renderForPrompt(SYMBOL_DICTIONARY_MAX_CHARS);
 
         Prompt prompt = new Prompt(List.of(
                 new SystemMessage(SYSTEM_PROMPT),
@@ -87,12 +92,16 @@ public class CodeGeneratorService {
                         --- EXISTING CODE CONTEXT (from RAG) ---
                         %s
 
+                        --- PROJECT SYMBOL DICTIONARY (anti-hallucination) ---
+                        %s
+
                         --- PROJECT CONVENTIONS ---
                         %s
                         %s
 
                         Generate the complete file contents as JSON now.
-                        """.formatted(projectId, planJson, codeContext, conventions, adaptiveConventions))
+                        """.formatted(projectId, planJson, codeContext, symbolDictionary,
+                                conventions, adaptiveConventions))
         ));
 
         long startMs = System.currentTimeMillis();
@@ -110,8 +119,13 @@ public class CodeGeneratorService {
                                                     String changeDescription) {
         log.info("Generating Aider SEARCH/REPLACE diffs for project={} file={}", projectId, filePath);
         String conventions = retrieveConventions(projectId);
+        String symbolDictionary = symbolDictionaryBuilder.build(projectId)
+                .renderForPrompt(SYMBOL_DICTIONARY_MAX_CHARS);
+        String groundedConventions = conventions
+                + "\n\n--- PROJECT SYMBOL DICTIONARY (anti-hallucination) ---\n"
+                + symbolDictionary;
         String llmOutput = aiderDiffFormatter.generateBlocks(existingContent, filePath,
-                changeDescription, conventions);
+                changeDescription, groundedConventions);
         var blocks = aiderDiffApplier.parse(llmOutput);
         var result = aiderDiffApplier.apply(java.util.Map.of(filePath, existingContent == null ? "" : existingContent),
                 blocks);

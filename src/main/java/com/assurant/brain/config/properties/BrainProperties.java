@@ -67,7 +67,8 @@ public record BrainProperties(
             double confidenceThreshold,
             int maxProjects,
             int maxPlanNodes,
-            int blastRadiusThreshold
+            int blastRadiusThreshold,
+            boolean requireSandbox
     ) {}
 
     public record Clarifier(

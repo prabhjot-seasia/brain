@@ -48,8 +48,17 @@ class EditOrchestratorTest {
                 new com.assurant.brain.sandbox.SandboxValidationService.ValidationResult(
                         true, true, "skipped (brain.sandbox.enabled=false)", "", 0,
                         com.assurant.brain.sandbox.SandboxValidationService.BuildTool.UNKNOWN));
+        var props = new com.assurant.brain.config.properties.BrainProperties(
+                null, null, null, null, null, null, null, null, null, null, null, null,
+                new com.assurant.brain.config.properties.BrainProperties.Autodev(0.7, 5, 50, 10, false),
+                null, null, null, null, null, null);
+        var symbolDictBuilder = mock(com.assurant.brain.codegen.SymbolDictionaryBuilder.class);
+        when(symbolDictBuilder.build(any())).thenReturn(com.assurant.brain.codegen.SymbolDictionary.EMPTY);
+        var grounding = new com.assurant.brain.codegen.SymbolGroundingValidator();
+        var boundary = new com.assurant.brain.codegen.EditBoundaryEnforcer();
         orchestrator = new EditOrchestrator(propagation, seam, codeGenerator,
-                diffGenerator, diffApplier, new ObjectMapper(), sandbox);
+                diffGenerator, diffApplier, new ObjectMapper(), sandbox, props,
+                symbolDictBuilder, grounding, boundary);
     }
 
     @Test
@@ -267,6 +276,49 @@ class EditOrchestratorTest {
                     .as("config file %s", configFile)
                     .anyMatch(e -> e.contains("sandbox: refusing") && e.contains(configFile));
         }
+    }
+
+    @Test
+    @DisplayName("requireSandbox=true and sandbox disabled → orchestrate refuses with explicit error")
+    void requireSandboxButDisabled() {
+        DependencyPropagationAnalyzer propagationLocal = mock(DependencyPropagationAnalyzer.class);
+        SeamAnalyzer seamLocal = mock(SeamAnalyzer.class);
+        CodeGeneratorService codeGenLocal = mock(CodeGeneratorService.class);
+        DiffGenerator diffGenLocal = mock(DiffGenerator.class);
+        DiffApplier applierLocal = mock(DiffApplier.class);
+        var sandboxDisabled = mock(com.assurant.brain.sandbox.SandboxValidationService.class);
+        when(sandboxDisabled.validateNode(any(), any())).thenReturn(
+                new com.assurant.brain.sandbox.SandboxValidationService.ValidationResult(
+                        true, true, "skipped (brain.sandbox.enabled=false)", "", 0,
+                        com.assurant.brain.sandbox.SandboxValidationService.BuildTool.UNKNOWN));
+        var sandboxOff = new com.assurant.brain.config.properties.BrainProperties.Sandbox(
+                false, 600L, "", 2048L, 1.0);
+        var requireOnAutodev = new com.assurant.brain.config.properties.BrainProperties.Autodev(
+                0.7, 5, 50, 10, true);
+        var props = new com.assurant.brain.config.properties.BrainProperties(
+                null, null, null, null, null, null, null, null, null, null, null, null,
+                requireOnAutodev, null, null, null, sandboxOff, null, null);
+        var localDictBuilder = mock(com.assurant.brain.codegen.SymbolDictionaryBuilder.class);
+        when(localDictBuilder.build(any())).thenReturn(com.assurant.brain.codegen.SymbolDictionary.EMPTY);
+        var localGrounding = new com.assurant.brain.codegen.SymbolGroundingValidator();
+        var localBoundary = new com.assurant.brain.codegen.EditBoundaryEnforcer();
+        EditOrchestrator local = new EditOrchestrator(propagationLocal, seamLocal, codeGenLocal,
+                diffGenLocal, applierLocal, new ObjectMapper(), sandboxDisabled, props,
+                localDictBuilder, localGrounding, localBoundary);
+
+        PlanNode seed = node("seed-1", "com.example.Foo", "src/Foo.java");
+        PlanGraph graph = new PlanGraph(List.of(seed), List.of());
+        when(propagationLocal.propagate(any())).thenReturn(graph);
+        when(seamLocal.annotate(graph)).thenReturn(graph);
+        when(codeGenLocal.generateCode(anyString(), anyString(), anyString()))
+                .thenReturn(Map.of("src/Foo.java", "content"));
+
+        EditOrchestrationResult result = local.orchestrate("proj-1", "req", List.of(seed));
+
+        assertThat(result.nodeErrors())
+                .anyMatch(e -> e.contains("brain.autodev.require-sandbox=true")
+                        && e.contains("brain.sandbox.enabled=false"));
+        verify(sandboxDisabled, never()).validateNode(any(), any());
     }
 
     private PlanNode node(String id, String fqn, String filePath) {
