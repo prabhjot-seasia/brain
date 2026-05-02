@@ -352,4 +352,71 @@ public class UISteps {
             }
         }
     }
+
+    // ── H10 — lazy Web-Notification permission prompt ───────────────────
+    @Given("I install a Notification permission spy")
+    public void installNotificationSpy() {
+        ((org.openqa.selenium.JavascriptExecutor) driver).executeScript(
+                "window.__brainNotificationRequests = 0;" +
+                "if (window.Notification && Notification.requestPermission) {" +
+                "  const orig = Notification.requestPermission.bind(Notification);" +
+                "  Notification.requestPermission = function() {" +
+                "    window.__brainNotificationRequests = (window.__brainNotificationRequests || 0) + 1;" +
+                "    try { return orig.apply(Notification, arguments); }" +
+                "    catch (e) { return Promise.resolve('default'); }" +
+                "  };" +
+                "  try { Object.defineProperty(Notification, 'permission', { get: () => 'default' }); } catch (e) {}" +
+                "}");
+    }
+
+    @Then("the Notification permission was requested at least once")
+    public void notificationRequested() {
+        WebDriverWait localWait = new WebDriverWait(driver, Duration.ofSeconds(15));
+        localWait.until(d -> {
+            Object n = ((org.openqa.selenium.JavascriptExecutor) d)
+                    .executeScript("return window.__brainNotificationRequests || 0;");
+            return n instanceof Number && ((Number) n).intValue() >= 1;
+        });
+    }
+
+    @Then("the Notification permission was not requested before any kickoff")
+    public void notificationNotRequestedYet() {
+        Object n = ((org.openqa.selenium.JavascriptExecutor) driver)
+                .executeScript("return window.__brainNotificationRequests || 0;");
+        assertThat(((Number) n).intValue())
+                .as("Notification.requestPermission must not be called on page load")
+                .isZero();
+    }
+
+    // ── H9 — SSE reconnect after a network blip via CDP ─────────────────
+    @When("the network is offline for {int} seconds")
+    public void networkOfflineFor(int seconds) {
+        toggleOffline(true);
+        try { Thread.sleep(seconds * 1000L); }
+        catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
+        toggleOffline(false);
+    }
+
+    private void toggleOffline(boolean offline) {
+        if (!(driver instanceof ChromeDriver chrome)) {
+            throw new IllegalStateException("CDP network emulation requires ChromeDriver");
+        }
+        java.util.Map<String, Object> params = new java.util.HashMap<>();
+        params.put("offline", offline);
+        params.put("latency", 0);
+        params.put("downloadThroughput", offline ? 0 : -1);
+        params.put("uploadThroughput", offline ? 0 : -1);
+        chrome.executeCdpCommand("Network.enable", java.util.Map.of());
+        chrome.executeCdpCommand("Network.emulateNetworkConditions", params);
+    }
+
+    @Then("I do not see a connection-lost error message")
+    public void noConnectionLostError() {
+        try { Thread.sleep(2500); }
+        catch (InterruptedException ie) { Thread.currentThread().interrupt(); }
+        String body = driver.findElement(By.tagName("body")).getText();
+        assertThat(body)
+                .as("Page must not surface 'Lost connection to job stream' after a brief blip")
+                .doesNotContain("Lost connection to job stream");
+    }
 }

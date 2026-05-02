@@ -161,6 +161,33 @@ Feature: Project Brain Admin UI
     When I navigate to the "Architecture" page via sidebar
     Then the URL path is "/architecture"
 
+  # ── H9 — SSE reconnect after a network blip ─────────────────────────
+
+  @allow-server-errors
+  Scenario: SSE stream survives a brief network blip without surfacing a connection-lost error
+    When I navigate to the "Ingest" page via sidebar
+    And I install a Notification permission spy
+    And I fill in the Ingest form with project "smoke-bdd-h9" name "smoke-bdd-h9" repo "https://10.255.255.99/x.git"
+    And I click the "Start Ingestion" button
+    And I eventually see a progress message containing "Ingest"
+    And the network is offline for 2 seconds
+    Then I do not see a connection-lost error message
+
+  # ── H10 — Web-Notification permission prompt fires lazily ───────────
+
+  Scenario: Notification permission is not requested on page load
+    When I navigate to the "Projects" page via sidebar
+    And I install a Notification permission spy
+    Then the Notification permission was not requested before any kickoff
+
+  @allow-server-errors
+  Scenario: Notification permission is requested on first heavy-op kickoff
+    When I navigate to the "Ingest" page via sidebar
+    And I install a Notification permission spy
+    And I fill in the Ingest form with project "smoke-bdd-h10" name "smoke-bdd-h10" repo "https://10.255.255.99/x.git"
+    And I click the "Start Ingestion" button
+    Then the Notification permission was requested at least once
+
   # ── Sidebar Navigation ──────────────────────────────────────────────
 
   Scenario: Sidebar highlights active page
