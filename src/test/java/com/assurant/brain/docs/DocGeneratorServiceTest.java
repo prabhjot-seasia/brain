@@ -52,7 +52,7 @@ class DocGeneratorServiceTest {
         var rag = new BrainProperties.Rag(5, 3, 6000, 1.5, 1.0, 10, 5);
         var llm = new BrainProperties.Llm("claude-sonnet", "claude-haiku", "anthropic", 4.0);
         var cache = new BrainProperties.Cache(0.90, 30, 5, true, 24, 300, 24);
-        var props = new BrainProperties(llm, null, rag, null, null, null, null, null, cache, null, null, null, null, null, null, null, null, null, null);
+        var props = new BrainProperties(llm, null, rag, null, null, null, null, null, cache, null, null, null, null, null, null, null, null, null, null, null);
 
         when(conventionRepo.findByProjectIdOrderByTrustWeightDesc(anyString())).thenReturn(List.of());
         when(projectRepo.findAffectedClasses(anyString(), anyString())).thenReturn(List.of());

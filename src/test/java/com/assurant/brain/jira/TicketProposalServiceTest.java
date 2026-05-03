@@ -28,7 +28,7 @@ class TicketProposalServiceTest {
     void setup() {
         chatModel = mock(ChatModel.class);
         var tracker = mock(com.assurant.brain.monitor.TokenUsageTracker.class);
-        var props = new com.assurant.brain.config.properties.BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        var props = new com.assurant.brain.config.properties.BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         var ticketProposalRepo = mock(com.assurant.brain.dao.TicketProposalRepository.class);
         service = new TicketProposalService(chatModel, new ObjectMapper(), tracker, props, ticketProposalRepo,
                 mock(com.assurant.brain.jobs.AsyncJobService.class));

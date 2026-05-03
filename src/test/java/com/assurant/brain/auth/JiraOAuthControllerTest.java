@@ -29,7 +29,7 @@ class JiraOAuthControllerTest {
         var jira = new BrainProperties.Jira("client-id", "client-secret",
                 "http://localhost:3000/auth/callback", "encryption-key-16chars!!",
                 null, "AI_DEV_", null);
-        var props = new BrainProperties(null, null, null, null, null, jira, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        var props = new BrainProperties(null, null, null, null, null, jira, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         controller = new JiraOAuthController(props, userSessionRepository, tokenStore,
                 org.springframework.web.client.RestClient.builder());
     }

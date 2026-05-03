@@ -67,6 +67,21 @@ public class GeneratedDocument {
     @Column(name = "generated_at")
     private OffsetDateTime generatedAt;
 
+    @Column(name = "confluence_page_id", length = 64)
+    private String confluencePageId;
+
+    @Column(name = "confluence_url", length = 2000)
+    private String confluenceUrl;
+
+    @Column(name = "confluence_space_key", length = 64)
+    private String confluenceSpaceKey;
+
+    @Column(name = "confluence_parent_page_id", length = 64)
+    private String confluenceParentPageId;
+
+    @Column(name = "confluence_published_at")
+    private OffsetDateTime confluencePublishedAt;
+
     @Column(name = "created_at", updatable = false)
     private OffsetDateTime createdAt;
 

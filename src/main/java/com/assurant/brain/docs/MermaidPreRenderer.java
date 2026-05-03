@@ -22,6 +22,8 @@ public class MermaidPreRenderer {
             "(?s)```mermaid\\s*\\n(.*?)\\n```");
     private static final long DEFAULT_MMDC_TIMEOUT_SECONDS = 30;
     private static final String DEFAULT_MMDC = "mmdc";
+    private static final String DEFAULT_RENDER_WIDTH = "1400";
+    private static final String DEFAULT_RENDER_SCALE = "2";
 
     private final BrainProperties brainProperties;
 
@@ -39,15 +41,17 @@ public class MermaidPreRenderer {
         int last = 0;
         m.reset();
         int idx = 0;
+        boolean svgMode = "svg".equalsIgnoreCase(outputFormat());
         while (m.find()) {
             sb.append(markdown, last, m.start());
             String mermaidSource = m.group(1);
-            String svg = renderToSvg(mermaidSource, idx);
-            if (svg == null) {
+            String embed = svgMode ? renderToSvgEmbed(mermaidSource, idx)
+                                   : renderToPngEmbed(mermaidSource, idx);
+            if (embed == null) {
                 sb.append(m.group());
             } else {
                 String token = "MERMAIDPLACEHOLDER" + idx + "TOKEN";
-                placeholders.put(token, "<div class=\"mermaid-svg\">\n" + svg + "\n</div>");
+                placeholders.put(token, embed);
                 sb.append("\n\n").append(token).append("\n\n");
             }
             idx++;
@@ -57,7 +61,22 @@ public class MermaidPreRenderer {
         return new PreRenderResult(sb.toString(), placeholders);
     }
 
-    private String renderToSvg(String mermaidSource, int index) {
+    private String renderToPngEmbed(String mermaidSource, int index) {
+        byte[] png = runMmdc(mermaidSource, index, ".png", true);
+        if (png == null) return null;
+        String base64 = java.util.Base64.getEncoder().encodeToString(png);
+        return "<div class=\"mermaid-png\"><img src=\"data:image/png;base64," + base64
+                + "\" alt=\"diagram-" + index + "\" style=\"max-width:100%;height:auto;\"/></div>";
+    }
+
+    private String renderToSvgEmbed(String mermaidSource, int index) {
+        byte[] svg = runMmdc(mermaidSource, index, ".svg", false);
+        if (svg == null) return null;
+        return "<div class=\"mermaid-svg\">\n"
+                + new String(svg, StandardCharsets.UTF_8) + "\n</div>";
+    }
+
+    private byte[] runMmdc(String mermaidSource, int index, String suffix, boolean png) {
         Path tempIn = null;
         Path tempOut = null;
         try {
@@ -69,12 +88,23 @@ public class MermaidPreRenderer {
                     ? Files.createTempFile("mermaid-" + index + "-", ".mmd")
                     : Files.createTempFile("mermaid-" + index + "-", ".mmd", ownerOnly);
             tempOut = ownerOnly == null
-                    ? Files.createTempFile("mermaid-" + index + "-", ".svg")
-                    : Files.createTempFile("mermaid-" + index + "-", ".svg", ownerOnly);
+                    ? Files.createTempFile("mermaid-" + index + "-", suffix)
+                    : Files.createTempFile("mermaid-" + index + "-", suffix, ownerOnly);
             Files.writeString(tempIn, mermaidSource, StandardCharsets.UTF_8);
 
-            ProcessBuilder pb = new ProcessBuilder(mmdcCommand(), "-i", tempIn.toString(),
-                    "-o", tempOut.toString(), "-b", "transparent");
+            java.util.List<String> cmd = new java.util.ArrayList<>();
+            cmd.add(mmdcCommand());
+            cmd.add("-i"); cmd.add(tempIn.toString());
+            cmd.add("-o"); cmd.add(tempOut.toString());
+            if (png) {
+                cmd.add("-b"); cmd.add("white");
+                cmd.add("--width"); cmd.add(renderWidth());
+                cmd.add("--scale"); cmd.add(renderScale());
+            } else {
+                cmd.add("-b"); cmd.add("transparent");
+            }
+
+            ProcessBuilder pb = new ProcessBuilder(cmd);
             pb.redirectErrorStream(true);
             Process p = pb.start();
             java.util.concurrent.CompletableFuture<Void> drain =
@@ -99,7 +129,7 @@ public class MermaidPreRenderer {
                         p.exitValue(), index);
                 return null;
             }
-            return Files.readString(tempOut, StandardCharsets.UTF_8);
+            return Files.readAllBytes(tempOut);
         } catch (IOException | InterruptedException | RuntimeException e) {
             log.debug("Mermaid render failed for diagram #{}: {} — falling back to fenced source",
                     index, e.getMessage());
@@ -129,6 +159,29 @@ public class MermaidPreRenderer {
             return DEFAULT_MMDC;
         }
         return brainProperties.docs().mermaidCliPath();
+    }
+
+    private String outputFormat() {
+        if (brainProperties.docs() == null
+                || brainProperties.docs().mermaidOutputFormat() == null
+                || brainProperties.docs().mermaidOutputFormat().isBlank()) {
+            return "png";
+        }
+        return brainProperties.docs().mermaidOutputFormat();
+    }
+
+    private String renderWidth() {
+        if (brainProperties.docs() == null || brainProperties.docs().mermaidRenderWidth() <= 0) {
+            return DEFAULT_RENDER_WIDTH;
+        }
+        return String.valueOf(brainProperties.docs().mermaidRenderWidth());
+    }
+
+    private String renderScale() {
+        if (brainProperties.docs() == null || brainProperties.docs().mermaidRenderScale() <= 0) {
+            return DEFAULT_RENDER_SCALE;
+        }
+        return String.valueOf(brainProperties.docs().mermaidRenderScale());
     }
 
     private void tryDelete(Path p) {

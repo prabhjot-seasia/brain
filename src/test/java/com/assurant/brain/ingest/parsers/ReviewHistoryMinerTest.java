@@ -69,8 +69,7 @@ class ReviewHistoryMinerTest {
     @Test
     @DisplayName("supports() false when GitHub config is null")
     void supportsFalseWithNullGithubConfig(@TempDir Path projectRoot) {
-        var props = new BrainProperties(null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null, null);
+        var props = new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         ReviewHistoryMiner miner = new ReviewHistoryMiner(props);
         ProjectNode projectNode = new ProjectNode();
         IngestionContext context = new IngestionContext(
@@ -93,7 +92,6 @@ class ReviewHistoryMinerTest {
 
     private static BrainProperties propertiesWithToken(String token) {
         BrainProperties.GitHub github = new BrainProperties.GitHub(token, "https://api.github.com", 3);
-        return new BrainProperties(null, null, null, null, github, null, null, null,
-                null, null, null, null, null, null, null, null, null, null, null);
+        return new BrainProperties(null, null, null, null, github, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
     }
 }

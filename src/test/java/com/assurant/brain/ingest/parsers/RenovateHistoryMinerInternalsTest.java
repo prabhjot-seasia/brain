@@ -18,9 +18,7 @@ class RenovateHistoryMinerInternalsTest {
     @BeforeEach
     void setup() {
         var gh = new BrainProperties.GitHub("ghp_real", "https://api.github.com", 3);
-        var props = new BrainProperties(null, null, null, null, gh, null, null, null, null,
-                null, null, null, null, null, null, null, null, null,
-                new BrainProperties.Docs("mmdc", 60, 0, 0, 5));
+        var props = new BrainProperties(null, null, null, null, gh, null, null, null, null, null, null, null, null, null, null, null, null, null, new BrainProperties.Docs("mmdc", 60, 0, 0, 5), null);
         miner = new RenovateHistoryMiner(props, mock(IngestDocumentFactory.class));
     }
 

@@ -43,7 +43,7 @@ class MergedPrAnalyzerServiceTest {
         prRecordRepository = mock(PullRequestRecordRepository.class);
         conventionLearner = mock(ConventionLearner.class);
         var tracker = mock(com.assurant.brain.monitor.TokenUsageTracker.class);
-        var props = new com.assurant.brain.config.properties.BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        var props = new com.assurant.brain.config.properties.BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         service = new MergedPrAnalyzerService(chatModel, gitHubClient, prRecordRepository,
                 conventionLearner, new ObjectMapper(), tracker, props);
     }

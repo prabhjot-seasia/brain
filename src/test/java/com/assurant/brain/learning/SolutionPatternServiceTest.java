@@ -42,7 +42,7 @@ class SolutionPatternServiceTest {
     @BeforeEach
     void setup() {
         org.mockito.Mockito.lenient().when(redisTemplate.opsForValue()).thenReturn(valueOps);
-        var props = new com.assurant.brain.config.properties.BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        var props = new com.assurant.brain.config.properties.BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         service = new SolutionPatternService(patternRepository, redisTemplate, props);
     }
 

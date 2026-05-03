@@ -1,0 +1,35 @@
+databaseChangeLog:
+  - changeSet:
+      id: BRAIN-022.01
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - columnExists:
+                tableName: generated_documents
+                columnName: confluence_page_id
+      changes:
+        - addColumn:
+            tableName: generated_documents
+            columns:
+              - column:
+                  name: confluence_page_id
+                  type: varchar(64)
+              - column:
+                  name: confluence_url
+                  type: varchar(2000)
+              - column:
+                  name: confluence_space_key
+                  type: varchar(64)
+              - column:
+                  name: confluence_parent_page_id
+                  type: varchar(64)
+              - column:
+                  name: confluence_published_at
+                  type: timestamp with time zone
+        - sql:
+            sql: >
+              CREATE INDEX idx_generated_documents_confluence
+                ON generated_documents (project_id, confluence_published_at DESC)
+                WHERE confluence_page_id IS NOT NULL
+            rollback: DROP INDEX IF EXISTS idx_generated_documents_confluence

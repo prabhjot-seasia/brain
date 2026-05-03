@@ -19,7 +19,7 @@ class ContextualGroundingRailTest {
 
     private void setProvider(String provider) {
         var llm = new BrainProperties.Llm("plan", "extract", provider, 4.0);
-        var props = new BrainProperties(llm, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        var props = new BrainProperties(llm, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         rail = new ContextualGroundingRail(props,
                 org.mockito.Mockito.mock(com.assurant.brain.monitor.TokenUsageTracker.class));
     }

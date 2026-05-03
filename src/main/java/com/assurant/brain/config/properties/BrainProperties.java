@@ -23,7 +23,8 @@ public record BrainProperties(
         Codegen codegen,
         Sandbox sandbox,
         Hawkeye hawkeye,
-        Docs docs
+        Docs docs,
+        Confluence confluence
 ) {
     public record Llm(String planModel, String extractModel, String provider, double charsPerToken) {}
 
@@ -39,6 +40,10 @@ public record BrainProperties(
 
     public record Jira(String oauthClientId, String oauthClientSecret, String oauthRedirectUri, String tokenEncryptionKey,
                         String webhookSecret, String labelPrefix, String connectedUserId) {}
+
+    public record Confluence(boolean enabled, String host, String email, String apiToken,
+                              String defaultSpaceKey, String defaultParentPageId,
+                              boolean publishOnPrMerge) {}
 
     public record Intake(long maxFileSizeMb) {}
 
@@ -101,5 +106,15 @@ public record BrainProperties(
                        int cacheTtlMinutes,
                        int maxPdfBytes,
                        int maxPrsIncluded,
-                       int mermaidTimeoutSeconds) {}
+                       int mermaidTimeoutSeconds,
+                       String mermaidOutputFormat,
+                       int mermaidRenderWidth,
+                       int mermaidRenderScale) {
+
+        public Docs(String mermaidCliPath, int cacheTtlMinutes, int maxPdfBytes,
+                     int maxPrsIncluded, int mermaidTimeoutSeconds) {
+            this(mermaidCliPath, cacheTtlMinutes, maxPdfBytes, maxPrsIncluded,
+                    mermaidTimeoutSeconds, "png", 1400, 2);
+        }
+    }
 }

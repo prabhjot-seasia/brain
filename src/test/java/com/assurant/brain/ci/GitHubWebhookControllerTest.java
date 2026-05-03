@@ -40,7 +40,7 @@ class GitHubWebhookControllerTest {
         ciRemediationService = mock(CiRemediationService.class);
         prRecordRepository = mock(PullRequestRecordRepository.class);
         var ci = new BrainProperties.Ci(WEBHOOK_SECRET, 3, 0.1, 0.1, 3.0, 15000);
-        var props = new BrainProperties(null, null, null, null, null, null, null, ci, null, null, null, null, null, null, null, null, null, null, null);
+        var props = new BrainProperties(null, null, null, null, null, null, null, ci, null, null, null, null, null, null, null, null, null, null, null, null);
         var asyncJobs = mock(com.assurant.brain.jobs.AsyncJobService.class);
         var jobId = java.util.UUID.randomUUID();
         var stubJob = new com.assurant.brain.jobs.AsyncJob(

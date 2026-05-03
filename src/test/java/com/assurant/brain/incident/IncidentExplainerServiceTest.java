@@ -45,8 +45,7 @@ class IncidentExplainerServiceTest {
             RailContext ctx = inv.getArgument(0);
             return new RailChain.ChainResult(ctx, List.of());
         });
-        var props = new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
-        service = new IncidentExplainerService(chatModel, repository, tracker, railChain, props);
+        var props = new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);        service = new IncidentExplainerService(chatModel, repository, tracker, railChain, props);
     }
 
     @Test

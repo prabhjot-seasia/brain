@@ -26,9 +26,7 @@ class RateLimitFilterTest {
 
     private static BrainProperties propsWith(int llm, int api, long windowMs) {
         var sec = new BrainProperties.Security("secret", 60, "*", llm, api, windowMs, false);
-        return new BrainProperties(null, null, null, null, null, null, null, null, null,
-                sec, null, null, null, null, null, null, null, null,
-                new BrainProperties.Docs("mmdc", 60, 0, 0, 5));
+        return new BrainProperties(null, null, null, null, null, null, null, null, null, sec, null, null, null, null, null, null, null, null, new BrainProperties.Docs("mmdc", 60, 0, 0, 5), null);
     }
 
     private RateLimitFilter filter;
@@ -136,8 +134,7 @@ class RateLimitFilterTest {
     @Test
     @DisplayName("Filter falls back to defaults when security props are null")
     void defaultsFromNullProps() throws Exception {
-        var emptyProps = new BrainProperties(null, null, null, null, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null);
+        var emptyProps = new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         RateLimitFilter f = new RateLimitFilter(emptyProps);
         when(req.getRequestURI()).thenReturn("/api/v1/projects");
         try (MockedStatic<SecurityUtils> mocked = mockStatic(SecurityUtils.class)) {

@@ -38,9 +38,7 @@ class IngestionServiceCommunityHookTest {
     void setup() {
         summarizer = mock(CommunitySummarizer.class);
         projectNodeRepository = mock(ProjectNodeRepository.class);
-        var props = new BrainProperties(null, null, null,
-                new BrainProperties.Chunk(18000, 200),
-                null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        var props = new BrainProperties(null, null, null, new BrainProperties.Chunk(18000, 200), null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         service = new IngestionService(
                 mock(ProjectRepository.class), mock(ChunkRepository.class),
                 projectNodeRepository, mock(CrossRepoEdgeBuilder.class), new CallGraphExtractor(),

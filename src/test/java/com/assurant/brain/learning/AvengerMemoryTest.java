@@ -41,7 +41,7 @@ class AvengerMemoryTest {
         brainMetrics = mock(BrainMetrics.class);
         when(redisTemplate.opsForValue()).thenReturn(valueOps);
         var cache = new BrainProperties.Cache(0.90, 30, 5, true, 24, 300, 24);
-        var props = new BrainProperties(null, null, null, null, null, null, null, null, cache, null, null, null, null, null, null, null, null, null, null);
+        var props = new BrainProperties(null, null, null, null, null, null, null, null, cache, null, null, null, null, null, null, null, null, null, null, null);
         memory = new AvengerMemory(learningEventRepository, redisTemplate, new ObjectMapper(),
                 new ConventionKeyExtractor(props), props, brainMetrics);
     }

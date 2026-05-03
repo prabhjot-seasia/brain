@@ -53,7 +53,7 @@ class IngestionServiceParsingTest {
 
         var chunk = new BrainProperties.Chunk(18000, 200);
         var embed = new BrainProperties.Embed("ollama", "bge-m3", 1024, "http://localhost:11434");
-        var props = new BrainProperties(null, embed, null, chunk, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        var props = new BrainProperties(null, embed, null, chunk, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         service = new IngestionService(projectRepository, chunkRepository,
                 projectNodeRepository, crossRepoEdgeBuilder, new CallGraphExtractor(),
                 vectorStore, props, new com.assurant.brain.ingest.RepoKindClassifier(),
@@ -361,7 +361,7 @@ class IngestionServiceParsingTest {
     @DisplayName("resolveErrorMessage maps invalid OpenAI key")
     void resolveErrorInvalidOpenAiKey() {
         var embed = new BrainProperties.Embed("openai", "text-embedding-3-small", 1024, null);
-        var props = new BrainProperties(null, embed, null, new BrainProperties.Chunk(18000, 200), null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        var props = new BrainProperties(null, embed, null, new BrainProperties.Chunk(18000, 200), null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         var svc = new IngestionService(projectRepository, chunkRepository,
                 projectNodeRepository, crossRepoEdgeBuilder, new CallGraphExtractor(),
                 vectorStore, props, new com.assurant.brain.ingest.RepoKindClassifier(),
@@ -490,7 +490,7 @@ class IngestionServiceParsingTest {
         when(projectRepository.save(any())).thenAnswer(i -> i.getArgument(0));
 
         var smallChunk = new BrainProperties.Chunk(100, 20);
-        var props = new BrainProperties(null, null, null, smallChunk, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        var props = new BrainProperties(null, null, null, smallChunk, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         var svc = new IngestionService(projectRepository, chunkRepository,
                 projectNodeRepository, crossRepoEdgeBuilder, new CallGraphExtractor(),
                 vectorStore, props, new com.assurant.brain.ingest.RepoKindClassifier(),

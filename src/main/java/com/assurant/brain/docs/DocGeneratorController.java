@@ -39,6 +39,7 @@ public class DocGeneratorController {
     private final FullDocBundleService fullDocBundleService;
     private final FullDocRateLimiter fullDocRateLimiter;
     private final BrainProperties brainProperties;
+    private final com.assurant.brain.confluence.ConfluencePublisherService confluencePublisherService;
 
     private static final int DEFAULT_MAX_PDF_BYTES = 50 * 1024 * 1024;
 
@@ -175,6 +176,30 @@ public class DocGeneratorController {
         return fullDocBundleService.status(id)
                 .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
+    }
+
+    @PostMapping("/{id}/publish/confluence")
+    @PreAuthorize("@projectAccess.canWriteDocument(#id)")
+    public ResponseEntity<?> publishToConfluence(
+            @PathVariable UUID id,
+            @jakarta.validation.Valid @RequestBody com.assurant.brain.confluence.dto.ConfluenceTarget target) {
+        if (brainProperties.confluence() == null || !brainProperties.confluence().enabled()) {
+            return ResponseEntity.status(503).body(Map.of(
+                    "error", "Confluence integration is not enabled (brain.confluence.enabled=false)"));
+        }
+        return documentRepository.findById(id)
+                .map(doc -> {
+                    com.assurant.brain.confluence.dto.PublishResult result =
+                            confluencePublisherService.publishOrUpdate(doc, target);
+                    int httpStatus = switch (result.status()) {
+                        case CREATED, UPDATED -> 200;
+                        case PARTIAL -> 207;
+                        case SKIPPED -> 409;
+                        case FAILED -> 502;
+                    };
+                    return ResponseEntity.status(httpStatus).body(result);
+                })
+                .orElseGet(() -> ResponseEntity.notFound().build());
     }
 
     @GetMapping("/{id}/pdf/{docType}")

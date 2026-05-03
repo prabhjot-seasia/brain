@@ -76,8 +76,7 @@ class JiraDrivenAutodevOrchestratorTest {
 
         BrainProperties.Jira jira = new BrainProperties.Jira(
                 null, null, null, null, "secret", "AI_DEV_", "bot");
-        BrainProperties props = new BrainProperties(null, null, null, null, null, jira,
-                null, null, null, null, null, null, null, null, null, null, null, null, null);
+        BrainProperties props = new BrainProperties(null, null, null, null, null, jira, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
 
         when(jiraClient.getIssueWithComments(eq("bot"), anyString())).thenReturn(Map.of(
                 "key", "BRAIN-1",

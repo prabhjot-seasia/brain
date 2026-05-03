@@ -21,7 +21,7 @@ class AnalysisFacadeIntentTest {
             mock(ClarificationSessionRepository.class),
             new ObjectMapper(),
             mock(com.assurant.brain.service.ProjectAffinityDetector.class),
-            new com.assurant.brain.config.properties.BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null),
+            new com.assurant.brain.config.properties.BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null),
             mock(com.assurant.brain.jobs.AsyncJobService.class)
     );
 

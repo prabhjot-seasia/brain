@@ -40,7 +40,7 @@ class CommunitySummarizerTest {
             return new com.assurant.brain.guardrail.RailChain.ChainResult(ctx, java.util.List.of());
         });
         var tracker = mock(com.assurant.brain.monitor.TokenUsageTracker.class);
-        var props = new com.assurant.brain.config.properties.BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        var props = new com.assurant.brain.config.properties.BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         summarizer = new CommunitySummarizer(chatModel, repository, railChain, tracker, props,
                 new com.fasterxml.jackson.databind.ObjectMapper());
         when(repository.save(any(CommunitySummaryNode.class))).thenAnswer(i -> i.getArgument(0));

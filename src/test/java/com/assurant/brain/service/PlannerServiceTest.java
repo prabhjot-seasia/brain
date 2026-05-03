@@ -69,7 +69,7 @@ class PlannerServiceTest {
         });
 
         var rag = new BrainProperties.Rag(5, 3, 4000, 1.5, 1.0, 10, 5);
-        var props = new BrainProperties(null, null, rag, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        var props = new BrainProperties(null, null, rag, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
 
         var adaptivePromptBuilder = mock(com.assurant.brain.codegen.AdaptivePromptBuilder.class);
         when(adaptivePromptBuilder.buildAdaptiveSection(anyString())).thenReturn("");

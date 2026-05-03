@@ -43,7 +43,7 @@ class SemanticCacheServiceTest {
     void setUp() {
         lenient().when(redisTemplate.opsForValue()).thenReturn(valueOps);
         var cache = new BrainProperties.Cache(0.90, 30, 5, true, 24, 300, 24);
-        var props = new BrainProperties(null, null, null, null, null, null, null, null, cache, null, null, null, null, null, null, null, null, null, null);
+        var props = new BrainProperties(null, null, null, null, null, null, null, null, cache, null, null, null, null, null, null, null, null, null, null, null);
         service = new SemanticCacheService(redisTemplate, props);
     }
 
@@ -67,7 +67,7 @@ class SemanticCacheServiceTest {
     @DisplayName("get returns empty when cache is disabled")
     void getCacheDisabled() {
         var disabledCache = new BrainProperties.Cache(0.90, 30, 5, false, 24, 300, 24);
-        var disabledProps = new BrainProperties(null, null, null, null, null, null, null, null, disabledCache, null, null, null, null, null, null, null, null, null, null);
+        var disabledProps = new BrainProperties(null, null, null, null, null, null, null, null, disabledCache, null, null, null, null, null, null, null, null, null, null, null);
         var disabledService = new SemanticCacheService(redisTemplate, disabledProps);
 
         Optional<String> result = disabledService.get("PlannerService", "proj-1", "prompt");
@@ -93,7 +93,7 @@ class SemanticCacheServiceTest {
     @DisplayName("put is a no-op when cache is disabled")
     void putDisabled() {
         var disabledCache = new BrainProperties.Cache(0.90, 30, 5, false, 24, 300, 24);
-        var disabledProps = new BrainProperties(null, null, null, null, null, null, null, null, disabledCache, null, null, null, null, null, null, null, null, null, null);
+        var disabledProps = new BrainProperties(null, null, null, null, null, null, null, null, disabledCache, null, null, null, null, null, null, null, null, null, null, null);
         var disabledService = new SemanticCacheService(redisTemplate, disabledProps);
 
         disabledService.put("PlannerService", "proj-1", "prompt", "response", 30);

@@ -46,7 +46,7 @@ class MultiRepoPrOrchestratorTest {
         selfReviewLoop = mock(SelfReviewLoop.class);
 
         var github = new BrainProperties.GitHub("token", "https://api.github.com", 3);
-        var props = new BrainProperties(null, null, null, null, github, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        var props = new BrainProperties(null, null, null, null, github, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
 
         when(prBatchRepository.save(any(PrBatch.class))).thenAnswer(inv -> {
             PrBatch b = inv.getArgument(0);

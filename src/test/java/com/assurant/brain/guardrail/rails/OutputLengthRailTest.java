@@ -18,7 +18,7 @@ class OutputLengthRailTest {
     private OutputLengthRail build(int max) {
         var guardrails = new BrainProperties.Guardrails(20000, 50000, max, false, true, InjectionClassifierType.REGEX);
         return new OutputLengthRail(
-                new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, guardrails, null, null, null, null, null, null, null));
+                new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, guardrails, null, null, null, null, null, null, null, null));
     }
 
     @Test

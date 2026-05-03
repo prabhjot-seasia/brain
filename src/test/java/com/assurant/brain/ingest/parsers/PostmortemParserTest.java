@@ -81,7 +81,6 @@ class PostmortemParserTest {
 
     private static BrainProperties testProperties() {
         BrainProperties.Rag rag = new BrainProperties.Rag(10, 5, 6000, 1.5, 1.0, 10, 5);
-        return new BrainProperties(null, null, rag, null, null, null, null, null,
-                null, null, null, null, null, null, null, null, null, null, null);
+        return new BrainProperties(null, null, rag, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
     }
 }

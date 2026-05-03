@@ -12,12 +12,7 @@ import Stack from '@mui/material/Stack'
 import Chip from '@mui/material/Chip'
 import Alert from '@mui/material/Alert'
 import CircularProgress from '@mui/material/CircularProgress'
-import Table from '@mui/material/Table'
-import TableBody from '@mui/material/TableBody'
-import TableCell from '@mui/material/TableCell'
-import TableContainer from '@mui/material/TableContainer'
-import TableHead from '@mui/material/TableHead'
-import TableRow from '@mui/material/TableRow'
+import TextField from '@mui/material/TextField'
 import {
   brainApi,
   type Project,
@@ -66,6 +61,9 @@ export default function FullDocsPage() {
   const [history, setHistory] = useState<FullDocHistoryRow[]>([])
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [confluenceSpaceKey, setConfluenceSpaceKey] = useState<string>('')
+  const [confluenceParentPageId, setConfluenceParentPageId] = useState<string>('')
+  const [confluenceMessage, setConfluenceMessage] = useState<string | null>(null)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
@@ -91,7 +89,7 @@ export default function FullDocsPage() {
 
   useEffect(() => stopPolling, [])
 
-  const startPolling = (documentId: string) => {
+  const startPolling = (documentId: string, onTerminal?: () => void) => {
     stopPolling()
     pollRef.current = setInterval(async () => {
       try {
@@ -100,6 +98,7 @@ export default function FullDocsPage() {
         if (next.status !== 'GENERATING' && next.status !== 'PENDING') {
           stopPolling()
           setBusy(false)
+          if (onTerminal) onTerminal()
         }
       } catch (e: unknown) {
         stopPolling()
@@ -111,7 +110,7 @@ export default function FullDocsPage() {
 
   const generate = async () => {
     if (!projectId) return
-    setError(null); setBusy(true); setStatus(null)
+    setError(null); setConfluenceMessage(null); setBusy(true); setStatus(null)
     try {
       const start = await brainApi.generateFullDocs(projectId)
       const initial = await brainApi.getFullDocStatus(start.documentId)
@@ -123,13 +122,27 @@ export default function FullDocsPage() {
         startWatchingJob(start.jobId, `Documentation for ${projectId}`)
       }
       if (initial.status === 'GENERATING' || initial.status === 'PENDING') {
-        startPolling(start.documentId)
+        startPolling(start.documentId, () => maybePublishConfluence(start.documentId))
       } else {
         setBusy(false)
+        await maybePublishConfluence(start.documentId)
       }
     } catch (e: unknown) {
       setBusy(false)
       setError(`Generation failed: ${e instanceof Error ? e.message : String(e)}`)
+    }
+  }
+
+  const maybePublishConfluence = async (documentId: string) => {
+    if (!confluenceSpaceKey || !confluenceParentPageId) return
+    try {
+      await brainApi.publishDocToConfluence(documentId, {
+        spaceKey: confluenceSpaceKey,
+        parentPageId: confluenceParentPageId,
+      })
+      setConfluenceMessage(`Published to Confluence (${confluenceSpaceKey} / ${confluenceParentPageId})`)
+    } catch (e: unknown) {
+      setConfluenceMessage(`Confluence publish failed: ${e instanceof Error ? e.message : String(e)}`)
     }
   }
 
@@ -188,10 +201,15 @@ export default function FullDocsPage() {
       </Typography>
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {confluenceMessage && (
+        <Alert severity={confluenceMessage.startsWith('Published') ? 'success' : 'warning'} sx={{ mb: 2 }}>
+          {confluenceMessage}
+        </Alert>
+      )}
 
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ sm: 'center' }}>
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ sm: 'center' }} sx={{ mb: 2 }}>
             <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 280 } }}>
               <InputLabel id="full-docs-project-label">Project</InputLabel>
               <Select labelId="full-docs-project-label" label="Project"
@@ -204,11 +222,32 @@ export default function FullDocsPage() {
                     startIcon={busy ? <CircularProgress size={16} /> : null}>
               Generate Full Documentation PDF
             </Button>
-
-            {status && status.generatedAt && (
-              <Chip size="small" color={badge.color} label={badge.label} />
-            )}
           </Stack>
+
+          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
+            <TextField size="small" label="Confluence space key (optional)"
+                       value={confluenceSpaceKey}
+                       onChange={e => setConfluenceSpaceKey(e.target.value)}
+                       helperText="e.g. ENG"
+                       sx={{ minWidth: { xs: '100%', sm: 200 } }} />
+            <TextField size="small" label="Confluence parent page ID (optional)"
+                       value={confluenceParentPageId}
+                       onChange={e => setConfluenceParentPageId(e.target.value)}
+                       helperText="e.g. 123456789"
+                       sx={{ minWidth: { xs: '100%', sm: 240 } }} />
+          </Stack>
+          <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+            Provide both fields to also publish the bundle to Confluence after generation.
+            Leave blank to skip. Subsequent merges to this project will auto-update the same page.
+          </Typography>
+        </CardContent>
+      </Card>
+
+      <Card sx={{ mb: 3 }}>
+        <CardContent>
+          {status && status.generatedAt && (
+            <Chip size="small" color={badge.color} label={badge.label} sx={{ mb: 2 }} />
+          )}
 
           {status && (
             <Box sx={{ mt: 3 }}>

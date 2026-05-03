@@ -39,8 +39,7 @@ class HawkeyeAsffControllerTest {
     void setup() {
         repository = mock(AvengerReviewRepository.class);
         asffMapper = mock(AsffMapper.class);
-        var props = new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                new BrainProperties.Hawkeye("arn:aws:test", "111122223333", "us-west-2"), null);
+        var props = new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, new BrainProperties.Hawkeye("arn:aws:test", "111122223333", "us-west-2"), null, null);
         controller = new HawkeyeAsffController(repository, asffMapper, props);
     }
 
@@ -90,8 +89,7 @@ class HawkeyeAsffControllerTest {
     @Test
     @DisplayName("findings falls back to default ProductArn when config is missing")
     void defaultProductArnWhenConfigMissing() {
-        var propsNoHawkeye = new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
-        ReflectionTestUtils.setField(controller, "brainProperties", propsNoHawkeye);
+        var propsNoHawkeye = new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);        ReflectionTestUtils.setField(controller, "brainProperties", propsNoHawkeye);
         when(repository.findByAvengerAndProjectIdOrderByCreatedAtDesc(any(), any(), any()))
                 .thenReturn(List.of());
         when(asffMapper.toFindingsBatch(any(), any())).thenReturn(mock(JsonNode.class));

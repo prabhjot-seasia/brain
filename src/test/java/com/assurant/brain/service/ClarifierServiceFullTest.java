@@ -32,7 +32,7 @@ class ClarifierServiceFullTest {
         chatModel = mock(ChatModel.class);
         projectNodeRepository = mock(ProjectNodeRepository.class);
         var tracker = mock(com.assurant.brain.monitor.TokenUsageTracker.class);
-        var props = new com.assurant.brain.config.properties.BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        var props = new com.assurant.brain.config.properties.BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         var railChain = mock(com.assurant.brain.guardrail.RailChain.class);
         when(railChain.applyPreLlm(any())).thenAnswer(i -> {
             com.assurant.brain.guardrail.RailContext ctx = i.getArgument(0);

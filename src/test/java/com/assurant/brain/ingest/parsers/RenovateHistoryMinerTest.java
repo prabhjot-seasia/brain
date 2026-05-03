@@ -28,9 +28,7 @@ class RenovateHistoryMinerTest {
 
     private static BrainProperties propsWithToken(String token) {
         var gh = new BrainProperties.GitHub(token, "https://api.github.com", 3);
-        return new BrainProperties(null, null, null, null, gh, null, null, null, null,
-                null, null, null, null, null, null, null, null, null,
-                new BrainProperties.Docs("mmdc", 60, 0, 0, 5));
+        return new BrainProperties(null, null, null, null, gh, null, null, null, null, null, null, null, null, null, null, null, null, null, new BrainProperties.Docs("mmdc", 60, 0, 0, 5), null);
     }
 
     private IngestionContext ctx(Path projectPath, String repoUrl) {

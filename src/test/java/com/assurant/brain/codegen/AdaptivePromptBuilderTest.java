@@ -27,7 +27,7 @@ class AdaptivePromptBuilderTest {
     void setup() {
         learningEventRepository = mock(LearningEventRepository.class);
         var cache = new com.assurant.brain.config.properties.BrainProperties.Cache(0.90, 30, 5, true, 24, 300, 24);
-        var props = new com.assurant.brain.config.properties.BrainProperties(null, null, null, null, null, null, null, null, cache, null, null, null, null, null, null, null, null, null, null);
+        var props = new com.assurant.brain.config.properties.BrainProperties(null, null, null, null, null, null, null, null, cache, null, null, null, null, null, null, null, null, null, null, null);
         var extractor = new com.assurant.brain.learning.ConventionKeyExtractor(props);
         var memory = mock(com.assurant.brain.learning.AvengerMemory.class);
         var reviewRepo = mock(com.assurant.brain.graph.repository.ReviewPatternNodeRepository.class);
@@ -110,7 +110,7 @@ class AdaptivePromptBuilderTest {
                 .thenReturn(List.of(p));
 
         var cache = new com.assurant.brain.config.properties.BrainProperties.Cache(0.90, 30, 5, true, 24, 300, 24);
-        var props = new com.assurant.brain.config.properties.BrainProperties(null, null, null, null, null, null, null, null, cache, null, null, null, null, null, null, null, null, null, null);
+        var props = new com.assurant.brain.config.properties.BrainProperties(null, null, null, null, null, null, null, null, cache, null, null, null, null, null, null, null, null, null, null, null);
         var extractor = new com.assurant.brain.learning.ConventionKeyExtractor(props);
         var memory = mock(com.assurant.brain.learning.AvengerMemory.class);
         var builder = new AdaptivePromptBuilder(learningEventRepository, extractor, memory, props, reviewRepo,
@@ -132,7 +132,7 @@ class AdaptivePromptBuilderTest {
                 .thenReturn(List.of());
 
         var cache = new com.assurant.brain.config.properties.BrainProperties.Cache(0.90, 30, 5, true, 24, 300, 24);
-        var props = new com.assurant.brain.config.properties.BrainProperties(null, null, null, null, null, null, null, null, cache, null, null, null, null, null, null, null, null, null, null);
+        var props = new com.assurant.brain.config.properties.BrainProperties(null, null, null, null, null, null, null, null, cache, null, null, null, null, null, null, null, null, null, null, null);
         var extractor = new com.assurant.brain.learning.ConventionKeyExtractor(props);
         var memory = mock(com.assurant.brain.learning.AvengerMemory.class);
         var builder = new AdaptivePromptBuilder(learningEventRepository, extractor, memory, props, reviewRepo,
@@ -151,7 +151,7 @@ class AdaptivePromptBuilderTest {
                         com.assurant.brain.enums.AvengerType.HAWKEYE, "proj-1"));
         var reviewRepo = mock(com.assurant.brain.graph.repository.ReviewPatternNodeRepository.class);
         var cache = new com.assurant.brain.config.properties.BrainProperties.Cache(0.90, 30, 5, true, 24, 300, 24);
-        var props = new com.assurant.brain.config.properties.BrainProperties(null, null, null, null, null, null, null, null, cache, null, null, null, null, null, null, null, null, null, null);
+        var props = new com.assurant.brain.config.properties.BrainProperties(null, null, null, null, null, null, null, null, cache, null, null, null, null, null, null, null, null, null, null, null);
         var extractor = new com.assurant.brain.learning.ConventionKeyExtractor(props);
         var b = new AdaptivePromptBuilder(learningEventRepository, extractor, memory, props, reviewRepo,
                 new ImitationCorpusBuilder(mock(org.springframework.ai.vectorstore.VectorStore.class)),
@@ -175,7 +175,7 @@ class AdaptivePromptBuilderTest {
         when(reviewRepo.findByProjectIdAndStatusOrderByOccurrences(any(), any(), anyInt()))
                 .thenReturn(List.of());
         var cache = new com.assurant.brain.config.properties.BrainProperties.Cache(0.90, 30, 5, true, 24, 300, 24);
-        var props = new com.assurant.brain.config.properties.BrainProperties(null, null, null, null, null, null, null, null, cache, null, null, null, null, null, null, null, null, null, null);
+        var props = new com.assurant.brain.config.properties.BrainProperties(null, null, null, null, null, null, null, null, cache, null, null, null, null, null, null, null, null, null, null, null);
         var extractor = new com.assurant.brain.learning.ConventionKeyExtractor(props);
         var b = new AdaptivePromptBuilder(learningEventRepository, extractor, memory, props, reviewRepo,
                 new ImitationCorpusBuilder(mock(org.springframework.ai.vectorstore.VectorStore.class)),
@@ -197,7 +197,7 @@ class AdaptivePromptBuilderTest {
         when(memory.getMemory(any(), any())).thenReturn(snap);
         var reviewRepo = mock(com.assurant.brain.graph.repository.ReviewPatternNodeRepository.class);
         var cache = new com.assurant.brain.config.properties.BrainProperties.Cache(0.90, 30, 5, true, 24, 300, 24);
-        var props = new com.assurant.brain.config.properties.BrainProperties(null, null, null, null, null, null, null, null, cache, null, null, null, null, null, null, null, null, null, null);
+        var props = new com.assurant.brain.config.properties.BrainProperties(null, null, null, null, null, null, null, null, cache, null, null, null, null, null, null, null, null, null, null, null);
         var extractor = new com.assurant.brain.learning.ConventionKeyExtractor(props);
         var b = new AdaptivePromptBuilder(learningEventRepository, extractor, memory, props, reviewRepo,
                 new ImitationCorpusBuilder(mock(org.springframework.ai.vectorstore.VectorStore.class)),
@@ -211,7 +211,7 @@ class AdaptivePromptBuilderTest {
     void blankProjectIdReturnsEmpty() {
         var reviewRepo = mock(com.assurant.brain.graph.repository.ReviewPatternNodeRepository.class);
         var cache = new com.assurant.brain.config.properties.BrainProperties.Cache(0.90, 30, 5, true, 24, 300, 24);
-        var props = new com.assurant.brain.config.properties.BrainProperties(null, null, null, null, null, null, null, null, cache, null, null, null, null, null, null, null, null, null, null);
+        var props = new com.assurant.brain.config.properties.BrainProperties(null, null, null, null, null, null, null, null, cache, null, null, null, null, null, null, null, null, null, null, null);
         var extractor = new com.assurant.brain.learning.ConventionKeyExtractor(props);
         var memory = mock(com.assurant.brain.learning.AvengerMemory.class);
         var b = new AdaptivePromptBuilder(learningEventRepository, extractor, memory, props, reviewRepo,
@@ -229,7 +229,7 @@ class AdaptivePromptBuilderTest {
         when(reviewRepo.findByProjectIdAndStatusOrderByOccurrences(any(), any(), anyInt()))
                 .thenThrow(new RuntimeException("graph offline"));
         var cache = new com.assurant.brain.config.properties.BrainProperties.Cache(0.90, 30, 5, true, 24, 300, 24);
-        var props = new com.assurant.brain.config.properties.BrainProperties(null, null, null, null, null, null, null, null, cache, null, null, null, null, null, null, null, null, null, null);
+        var props = new com.assurant.brain.config.properties.BrainProperties(null, null, null, null, null, null, null, null, cache, null, null, null, null, null, null, null, null, null, null, null);
         var extractor = new com.assurant.brain.learning.ConventionKeyExtractor(props);
         var memory = mock(com.assurant.brain.learning.AvengerMemory.class);
         var b = new AdaptivePromptBuilder(learningEventRepository, extractor, memory, props, reviewRepo,

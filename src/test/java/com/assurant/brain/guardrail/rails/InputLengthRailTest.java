@@ -15,7 +15,7 @@ class InputLengthRailTest {
 
     private BrainProperties props(int maxInput) {
         var guardrails = new BrainProperties.Guardrails(maxInput, 50000, 30000, false, true, InjectionClassifierType.REGEX);
-        return new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, guardrails, null, null, null, null, null, null, null);
+        return new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, guardrails, null, null, null, null, null, null, null, null);
     }
 
     @Test

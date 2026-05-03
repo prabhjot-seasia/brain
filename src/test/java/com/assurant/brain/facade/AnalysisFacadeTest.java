@@ -50,10 +50,7 @@ class AnalysisFacadeTest {
         com.assurant.brain.service.ProjectAffinityDetector detector =
                 mock(com.assurant.brain.service.ProjectAffinityDetector.class);
         when(detector.detect(any())).thenReturn(java.util.List.of());
-        var brainProps = new com.assurant.brain.config.properties.BrainProperties(
-                null, null, null, null, null, null, null, null, null, null, null, null, null,
-                new com.assurant.brain.config.properties.BrainProperties.Clarifier(0.75, 0.5, 3, 5, 5), null, null,
-                null, null, null);
+        var brainProps = new com.assurant.brain.config.properties.BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, new com.assurant.brain.config.properties.BrainProperties.Clarifier(0.75, 0.5, 3, 5, 5), null, null, null, null, null, null);
         facade = new AnalysisFacade(clarifierService, plannerService, sessionRepository, new ObjectMapper(), detector, brainProps,
                 mock(com.assurant.brain.jobs.AsyncJobService.class));
     }

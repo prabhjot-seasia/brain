@@ -142,6 +142,14 @@ brain:
     webhook-secret: ${BRAIN_JIRA_WEBHOOK_SECRET:}
     label-prefix: ${BRAIN_JIRA_LABEL_PREFIX:AI_DEV_}
     connected-user-id: ${BRAIN_JIRA_CONNECTED_USER_ID:}
+  confluence:
+    enabled: ${BRAIN_CONFLUENCE_ENABLED:false}
+    host: ${BRAIN_CONFLUENCE_HOST:}
+    email: ${BRAIN_CONFLUENCE_EMAIL:}
+    api-token: ${BRAIN_CONFLUENCE_API_TOKEN:}
+    default-space-key: ${BRAIN_CONFLUENCE_DEFAULT_SPACE:}
+    default-parent-page-id: ${BRAIN_CONFLUENCE_DEFAULT_PARENT:}
+    publish-on-pr-merge: ${BRAIN_CONFLUENCE_PUBLISH_ON_PR_MERGE:true}
   intake:
     max-file-size-mb: 50
   security:
@@ -217,6 +225,9 @@ brain:
     max-pdf-bytes: ${BRAIN_DOCS_MAX_PDF_BYTES:52428800}
     max-prs-included: ${BRAIN_DOCS_MAX_PRS_INCLUDED:20}
     mermaid-timeout-seconds: ${BRAIN_DOCS_MERMAID_TIMEOUT_SECONDS:30}
+    mermaid-output-format: ${BRAIN_DOCS_MERMAID_OUTPUT_FORMAT:png}
+    mermaid-render-width: ${BRAIN_DOCS_MERMAID_RENDER_WIDTH:1400}
+    mermaid-render-scale: ${BRAIN_DOCS_MERMAID_RENDER_SCALE:2}
   jobs:
     sse-heartbeat-ms: ${BRAIN_JOBS_SSE_HEARTBEAT_MS:15000}
     retention-days: ${BRAIN_JOBS_RETENTION_DAYS:90}
@@ -311,6 +322,14 @@ brain:
     webhook-secret: ''
     label-prefix: AI_DEV_
     connected-user-id: ''
+  confluence:
+    enabled: false
+    host: ''
+    email: ''
+    api-token: ''
+    default-space-key: ''
+    default-parent-page-id: ''
+    publish-on-pr-merge: true
   intake:
     max-file-size-mb: 50
   security:
@@ -386,6 +405,9 @@ brain:
     max-pdf-bytes: ${BRAIN_DOCS_MAX_PDF_BYTES:52428800}
     max-prs-included: ${BRAIN_DOCS_MAX_PRS_INCLUDED:20}
     mermaid-timeout-seconds: ${BRAIN_DOCS_MERMAID_TIMEOUT_SECONDS:30}
+    mermaid-output-format: ${BRAIN_DOCS_MERMAID_OUTPUT_FORMAT:png}
+    mermaid-render-width: ${BRAIN_DOCS_MERMAID_RENDER_WIDTH:1400}
+    mermaid-render-scale: ${BRAIN_DOCS_MERMAID_RENDER_SCALE:2}
   jobs:
     sse-heartbeat-ms: ${BRAIN_JOBS_SSE_HEARTBEAT_MS:15000}
     retention-days: ${BRAIN_JOBS_RETENTION_DAYS:90}

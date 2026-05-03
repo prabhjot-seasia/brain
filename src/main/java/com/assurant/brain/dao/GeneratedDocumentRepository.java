@@ -34,4 +34,6 @@ public interface GeneratedDocumentRepository extends JpaRepository<GeneratedDocu
     Optional<GeneratedDocument> findFirstByProjectIdAndDocTypeAndStatus(@Param("projectId") String projectId,
                                                                         @Param("docType") DocType docType,
                                                                         @Param("status") DocGenerationStatus status);
+
+    Optional<GeneratedDocument> findFirstByProjectIdAndConfluencePageIdIsNotNullOrderByConfluencePublishedAtDesc(String projectId);
 }

@@ -15,7 +15,7 @@ class MermaidPreRendererTest {
     @BeforeEach
     void setup() {
         var docs = new BrainProperties.Docs("/nonexistent/mmdc-not-installed", 60, 0, 0, 5);
-        var props = new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, docs);
+        var props = new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, docs, null);
         renderer = new MermaidPreRenderer(props);
     }
 

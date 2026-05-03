@@ -36,7 +36,7 @@ class GitCloneServiceFullTest {
     @DisplayName("credentialsProvider handles null github config")
     void credentialsWithNullGithub() {
         GitCloneService service = new GitCloneService(
-                new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null));
+                new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null));
         assertThatThrownBy(() -> service.clone("https://invalid-host.example.com/repo.git", "main"))
                 .isInstanceOf(IngestionException.class);
     }
@@ -112,7 +112,6 @@ class GitCloneServiceFullTest {
     }
 
     private GitCloneService buildService(String token) {
-        return new GitCloneService(new BrainProperties(null, null, null, null,
-                new BrainProperties.GitHub(token, "https://api.github.com", 3), null, null, null, null, null, null, null, null, null, null, null, null, null, null));
+        return new GitCloneService(new BrainProperties(null, null, null, null, new BrainProperties.GitHub(token, "https://api.github.com", 3), null, null, null, null, null, null, null, null, null, null, null, null, null, null, null));
     }
 }

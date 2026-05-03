@@ -24,7 +24,7 @@ class CiFailureParserTest {
     void setup() {
         chatModel = mock(ChatModel.class);
         var tracker = mock(com.assurant.brain.monitor.TokenUsageTracker.class);
-        var props = new com.assurant.brain.config.properties.BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        var props = new com.assurant.brain.config.properties.BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         parser = new CiFailureParser(chatModel, new ObjectMapper(), tracker, props);
     }
 

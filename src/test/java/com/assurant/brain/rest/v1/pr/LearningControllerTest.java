@@ -31,7 +31,11 @@ class LearningControllerTest {
         analyzer = mock(MergedPrAnalyzerService.class);
         remediationRepo = mock(CiRemediationAttemptRepository.class);
         learningRepo = mock(LearningEventRepository.class);
-        controller = new LearningController(analyzer, remediationRepo, learningRepo);
+        var docRepo = mock(com.assurant.brain.dao.GeneratedDocumentRepository.class);
+        var publisher = mock(com.assurant.brain.confluence.ConfluencePublisherService.class);
+        var props = mock(com.assurant.brain.config.properties.BrainProperties.class);
+        controller = new LearningController(analyzer, remediationRepo, learningRepo,
+                docRepo, publisher, props);
     }
 
     @Test

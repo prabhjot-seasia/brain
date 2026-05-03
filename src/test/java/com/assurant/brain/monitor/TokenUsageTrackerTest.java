@@ -32,7 +32,7 @@ class TokenUsageTrackerTest {
     void setup() {
         BrainMetrics metrics = new BrainMetrics(new SimpleMeterRegistry());
         var cost = new BrainProperties.Cost(0.000003, 0.000015);
-        var props = new BrainProperties(null, null, null, null, null, null, null, null, null, null, cost, null, null, null, null, null, null, null, null);
+        var props = new BrainProperties(null, null, null, null, null, null, null, null, null, null, cost, null, null, null, null, null, null, null, null, null);
         tracker = new TokenUsageTracker(repository, metrics, props);
     }
 

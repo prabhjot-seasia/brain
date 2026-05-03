@@ -15,7 +15,7 @@ class JwtTokenProviderTest {
 
     private JwtTokenProvider providerWith(String secret, int ttl) {
         var security = new BrainProperties.Security(secret, ttl, "http://localhost:3000", 10, 60, 60000, false);
-        var props = new BrainProperties(null, null, null, null, null, null, null, null, null, security, null, null, null, null, null, null, null, null, null);
+        var props = new BrainProperties(null, null, null, null, null, null, null, null, null, security, null, null, null, null, null, null, null, null, null, null);
         return new JwtTokenProvider(props);
     }
 
@@ -65,8 +65,7 @@ class JwtTokenProviderTest {
     @Test
     @DisplayName("falls back to generated key when security is null")
     void nullSecurityFallback() {
-        var props = new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
-        JwtTokenProvider provider = new JwtTokenProvider(props);
+        var props = new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);        JwtTokenProvider provider = new JwtTokenProvider(props);
         String token = provider.createToken("user-1");
         assertThat(provider.validateAndExtractUserId(token)).contains("user-1");
     }

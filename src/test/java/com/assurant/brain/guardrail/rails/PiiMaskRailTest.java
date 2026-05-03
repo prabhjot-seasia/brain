@@ -15,7 +15,7 @@ class PiiMaskRailTest {
 
     private PiiMaskRail build(boolean blockMode) {
         var guardrails = new BrainProperties.Guardrails(20000, 50000, 30000, blockMode, true, InjectionClassifierType.REGEX);
-        var props = new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, guardrails, null, null, null, null, null, null, null);
+        var props = new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, guardrails, null, null, null, null, null, null, null, null);
         return new PiiMaskRail(props);
     }
 

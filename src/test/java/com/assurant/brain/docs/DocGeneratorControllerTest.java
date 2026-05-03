@@ -42,7 +42,8 @@ class DocGeneratorControllerTest {
         });
         var props = mock(com.assurant.brain.config.properties.BrainProperties.class);
         controller = new DocGeneratorController(docGeneratorService, documentRepository,
-                fullDocBundleService, rateLimiter, props);
+                fullDocBundleService, rateLimiter, props,
+                mock(com.assurant.brain.confluence.ConfluencePublisherService.class));
     }
 
     @Test

@@ -10,7 +10,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class ConventionKeyExtractorTest {
 
     private final ConventionKeyExtractor extractor = new ConventionKeyExtractor(
-            new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null));
+            new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null));
 
     @Test
     @DisplayName("returns empty for null input")

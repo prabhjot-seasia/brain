@@ -48,10 +48,7 @@ class EditOrchestratorTest {
                 new com.assurant.brain.sandbox.SandboxValidationService.ValidationResult(
                         true, true, "skipped (brain.sandbox.enabled=false)", "", 0,
                         com.assurant.brain.sandbox.SandboxValidationService.BuildTool.UNKNOWN));
-        var props = new com.assurant.brain.config.properties.BrainProperties(
-                null, null, null, null, null, null, null, null, null, null, null, null,
-                new com.assurant.brain.config.properties.BrainProperties.Autodev(0.7, 5, 50, 10, false),
-                null, null, null, null, null, null);
+        var props = new com.assurant.brain.config.properties.BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, new com.assurant.brain.config.properties.BrainProperties.Autodev(0.7, 5, 50, 10, false), null, null, null, null, null, null, null);
         var symbolDictBuilder = mock(com.assurant.brain.codegen.SymbolDictionaryBuilder.class);
         when(symbolDictBuilder.build(any())).thenReturn(com.assurant.brain.codegen.SymbolDictionary.EMPTY);
         var grounding = new com.assurant.brain.codegen.SymbolGroundingValidator();
@@ -295,9 +292,7 @@ class EditOrchestratorTest {
                 false, 600L, "", 2048L, 1.0);
         var requireOnAutodev = new com.assurant.brain.config.properties.BrainProperties.Autodev(
                 0.7, 5, 50, 10, true);
-        var props = new com.assurant.brain.config.properties.BrainProperties(
-                null, null, null, null, null, null, null, null, null, null, null, null,
-                requireOnAutodev, null, null, null, sandboxOff, null, null);
+        var props = new com.assurant.brain.config.properties.BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, requireOnAutodev, null, null, null, sandboxOff, null, null, null);
         var localDictBuilder = mock(com.assurant.brain.codegen.SymbolDictionaryBuilder.class);
         when(localDictBuilder.build(any())).thenReturn(com.assurant.brain.codegen.SymbolDictionary.EMPTY);
         var localGrounding = new com.assurant.brain.codegen.SymbolGroundingValidator();

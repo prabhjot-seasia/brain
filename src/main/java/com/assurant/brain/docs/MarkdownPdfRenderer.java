@@ -43,6 +43,8 @@ public class MarkdownPdfRenderer {
             th, td { border: 1pt solid #ddd; padding: 4pt 6pt; text-align: left; font-size: 10pt; }
             th { background: #f0f4f8; }
             .mermaid-svg svg { max-width: 100%; height: auto; }
+            .mermaid-png img { max-width: 100%; height: auto; }
+            .mermaid-png { text-align: center; margin: 8pt 0; page-break-inside: avoid; }
             .cover-page { text-align: center; padding-top: 80pt; page-break-after: always; }
             .cover-page h1 { font-size: 32pt; border: none; }
             .cover-page .meta { font-size: 12pt; color: #555; margin-top: 30pt; line-height: 2; }

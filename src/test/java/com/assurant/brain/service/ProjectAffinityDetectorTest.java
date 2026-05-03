@@ -53,8 +53,7 @@ class ProjectAffinityDetectorTest {
             RailContext ctx = i.getArgument(0);
             return new RailChain.ChainResult(ctx, List.of());
         });
-        var props = new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
-        detector = new ProjectAffinityDetector(chatModel, new ObjectMapper(), projectNodeRepository,
+        var props = new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);        detector = new ProjectAffinityDetector(chatModel, new ObjectMapper(), projectNodeRepository,
                 tokenUsageTracker, props, railChain);
     }
 

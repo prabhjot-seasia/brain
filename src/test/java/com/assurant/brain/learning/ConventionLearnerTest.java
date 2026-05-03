@@ -35,7 +35,7 @@ class ConventionLearnerTest {
         learningEventRepository = mock(LearningEventRepository.class);
 
         var ci = new BrainProperties.Ci("secret", 3, 0.1, 0.1, 3.0, 15000);
-        var props = new BrainProperties(null, null, null, null, null, null, null, ci, null, null, null, null, null, null, null, null, null, null, null);
+        var props = new BrainProperties(null, null, null, null, null, null, null, ci, null, null, null, null, null, null, null, null, null, null, null, null);
 
         learner = new ConventionLearner(conventionNodeRepository, learningEventRepository, props);
     }

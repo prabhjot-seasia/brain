@@ -34,9 +34,7 @@ class ProjectAccessServiceTest {
 
     private BrainProperties propsWithEnforcement(boolean enforce) {
         var sec = new BrainProperties.Security("s", 60, "*", 10, 60, 60000, enforce);
-        return new BrainProperties(null, null, null, null, null, null, null, null, null,
-                sec, null, null, null, null, null, null, null, null,
-                new BrainProperties.Docs("mmdc", 60, 0, 0, 5));
+        return new BrainProperties(null, null, null, null, null, null, null, null, null, sec, null, null, null, null, null, null, null, null, new BrainProperties.Docs("mmdc", 60, 0, 0, 5), null);
     }
 
     private ProjectMember member(String projectId, String userId, ProjectRole role) {

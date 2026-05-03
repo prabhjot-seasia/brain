@@ -53,7 +53,7 @@ class PrCreationFacadeTest {
         prRecordRepository = mock(PullRequestRecordRepository.class);
 
         var github = new BrainProperties.GitHub("token", "https://api.github.com", 3);
-        var props = new BrainProperties(null, null, null, null, github, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        var props = new BrainProperties(null, null, null, null, github, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
 
         var annotationsBuilder = mock(com.assurant.brain.codegen.PrAnnotationsBuilder.class);
         when(annotationsBuilder.renderPrBody(any(), anyMap(), anyString())).thenReturn("body");

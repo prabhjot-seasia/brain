@@ -19,7 +19,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AsffMapperTest {
 
     private final com.assurant.brain.config.properties.BrainProperties props =
-            new com.assurant.brain.config.properties.BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+            new com.assurant.brain.config.properties.BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
     private final AsffMapper mapper = new AsffMapper(new ObjectMapper(), props);
     private static final String ARN = "arn:aws:securityhub:::product/project-brain/hawkeye";
 

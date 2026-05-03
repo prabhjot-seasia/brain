@@ -26,13 +26,24 @@ public class LearningController {
     private final MergedPrAnalyzerService mergedPrAnalyzerService;
     private final CiRemediationAttemptRepository remediationRepository;
     private final LearningEventRepository learningEventRepository;
+    private final com.assurant.brain.dao.GeneratedDocumentRepository generatedDocumentRepository;
+    private final com.assurant.brain.confluence.ConfluencePublisherService confluencePublisherService;
+    private final com.assurant.brain.config.properties.BrainProperties brainProperties;
 
     @PostMapping("/pr/{id}/analyze-merge")
     public ResponseEntity<List<LearningEvent>> analyzeMergedPr(
             @PathVariable UUID id,
             @RequestParam @NotBlank String projectId) {
         List<LearningEvent> events = mergedPrAnalyzerService.analyzeAndLearn(id, projectId);
+        maybeRepublishConfluenceDoc(projectId);
         return ResponseEntity.ok(events);
+    }
+
+    private void maybeRepublishConfluenceDoc(String projectId) {
+        var conf = brainProperties.confluence();
+        if (conf == null || !conf.enabled() || !conf.publishOnPrMerge()) return;
+        generatedDocumentRepository.findFirstByProjectIdAndConfluencePageIdIsNotNullOrderByConfluencePublishedAtDesc(projectId)
+                .ifPresent(confluencePublisherService::updateExisting);
     }
 
     @GetMapping("/pr/{id}/remediations")

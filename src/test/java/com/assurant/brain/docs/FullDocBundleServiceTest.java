@@ -50,8 +50,7 @@ class FullDocBundleServiceTest {
         docGeneratorService = mock(DocGeneratorService.class);
         mermaidPreRenderer = mock(MermaidPreRenderer.class);
         markdownPdfRenderer = mock(MarkdownPdfRenderer.class);
-        var props = new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null,
-                new BrainProperties.Docs("/nonexistent/mmdc", 60, 0, 0, 5));
+        var props = new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, new BrainProperties.Docs("/nonexistent/mmdc", 60, 0, 0, 5), null);
         Executor directExecutor = Runnable::run;
         var pdfRepo = mock(com.assurant.brain.dao.GeneratedDocumentPdfRepository.class);
         when(pdfRepo.findByDocumentIdOrderByDocTypeAsc(any(java.util.UUID.class))).thenReturn(java.util.List.of());

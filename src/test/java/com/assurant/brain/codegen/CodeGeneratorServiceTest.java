@@ -42,7 +42,7 @@ class CodeGeneratorServiceTest {
         conventionNodeRepository = mock(ConventionNodeRepository.class);
 
         var rag = new BrainProperties.Rag(5, 3, 4000, 1.5, 1.0, 10, 5);
-        var props = new BrainProperties(null, null, rag, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        var props = new BrainProperties(null, null, rag, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
 
         var tracker = mock(com.assurant.brain.monitor.TokenUsageTracker.class);
         var adaptivePromptBuilder = mock(AdaptivePromptBuilder.class);

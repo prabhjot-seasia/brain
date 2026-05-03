@@ -25,7 +25,7 @@ class DependencyPropagationAnalyzerTest {
     void setup() {
         repo = mock(ProjectNodeRepository.class);
         BrainProperties.Autodev autodev = new BrainProperties.Autodev(0.7, 5, 50, 10, false);
-        BrainProperties props = new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, autodev, null, null, null, null, null, null);
+        BrainProperties props = new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, autodev, null, null, null, null, null, null, null);
         analyzer = new DependencyPropagationAnalyzer(repo, props);
     }
 
@@ -95,7 +95,7 @@ class DependencyPropagationAnalyzerTest {
     @DisplayName("Max-plan-nodes cap truncates further propagation")
     void maxPlanNodesCapTruncates() {
         BrainProperties.Autodev autodev = new BrainProperties.Autodev(0.7, 5, 2, 10, false);
-        BrainProperties props = new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, autodev, null, null, null, null, null, null);
+        BrainProperties props = new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, autodev, null, null, null, null, null, null, null);
         analyzer = new DependencyPropagationAnalyzer(repo, props);
 
         PlanNode seed = seed("com.example.Foo", ChangeKind.MODIFY_METHOD_SIGNATURE);

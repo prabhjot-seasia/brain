@@ -52,8 +52,7 @@ class AvengerReviewerTest {
         personaLoader = mock(AvengerPersonaLoader.class);
         repository = mock(AvengerReviewRepository.class);
         TokenUsageTracker tracker = mock(TokenUsageTracker.class);
-        BrainProperties props = new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
-        RailChain railChain = mock(RailChain.class);
+        BrainProperties props = new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);        RailChain railChain = mock(RailChain.class);
         when(railChain.applyPreLlm(any())).thenAnswer(i -> {
             RailContext ctx = i.getArgument(0);
             return new RailChain.ChainResult(ctx, List.of());

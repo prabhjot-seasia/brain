@@ -17,8 +17,7 @@ class ClarifierServiceTest {
             Mockito.mock(ChatModel.class),
             Mockito.mock(ProjectNodeRepository.class),
             Mockito.mock(com.assurant.brain.monitor.TokenUsageTracker.class),
-            new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null,
-                    new BrainProperties.Clarifier(0.75, 0.5, 3, 5, 5), null, null, null, null, null),
+            new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, new BrainProperties.Clarifier(0.75, 0.5, 3, 5, 5), null, null, null, null, null, null),
             Mockito.mock(com.assurant.brain.guardrail.RailChain.class)
     );
 

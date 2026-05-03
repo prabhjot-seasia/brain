@@ -65,7 +65,6 @@ class GitCloneServiceTest {
     }
 
     private GitCloneService buildService(String token) {
-        return new GitCloneService(new BrainProperties(null, null, null, null,
-                new BrainProperties.GitHub(token, "https://api.github.com", 3), null, null, null, null, null, null, null, null, null, null, null, null, null, null));
+        return new GitCloneService(new BrainProperties(null, null, null, null, new BrainProperties.GitHub(token, "https://api.github.com", 3), null, null, null, null, null, null, null, null, null, null, null, null, null, null, null));
     }
 }

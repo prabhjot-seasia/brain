@@ -219,6 +219,9 @@ export const brainApi = {
   retryFailedSections: (documentId: string) =>
     client.post<FullDocStartResponse>(`/docs/${documentId}/retry-failed`).then(r => r.data),
 
+  publishDocToConfluence: (documentId: string, target: { spaceKey: string; parentPageId: string }) =>
+    client.post(`/docs/${documentId}/publish/confluence`, target).then(r => r.data),
+
   listFullDocs: (projectId: string) =>
     client.get<FullDocHistoryRow[]>(`/docs/full`, { params: { projectId } }).then(r => r.data),
 

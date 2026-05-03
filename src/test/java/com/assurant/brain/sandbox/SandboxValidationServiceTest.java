@@ -21,7 +21,7 @@ class SandboxValidationServiceTest {
     @BeforeEach
     void setup() {
         var sandbox = new BrainProperties.Sandbox(false, 30L, null, 2048L, 1.0);
-        var props = new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, sandbox, null, null);
+        var props = new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, sandbox, null, null, null);
         service = new SandboxValidationService(props);
     }
 
@@ -103,7 +103,7 @@ class SandboxValidationServiceTest {
     void wrapWithDockerWrapsCommand(@TempDir Path dir) {
         var sandbox = new BrainProperties.Sandbox(true, 60L,
                 "project-brain/sandbox:latest", 1024L, 0.5);
-        var props = new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, sandbox, null, null);
+        var props = new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, sandbox, null, null, null);
         var docked = new SandboxValidationService(props);
 
         @SuppressWarnings("unchecked")

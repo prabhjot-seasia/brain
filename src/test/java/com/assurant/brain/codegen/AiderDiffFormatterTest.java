@@ -46,7 +46,7 @@ class AiderDiffFormatterTest {
             return new RailChain.ChainResult(ctx, List.of());
         });
         var llm = new BrainProperties.Llm("plan-model", "extract-model", "ollama", 4.0);
-        var props = new BrainProperties(llm, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        var props = new BrainProperties(llm, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         formatter = new AiderDiffFormatter(chatModel, tracker, props, railChain);
     }
 
@@ -95,8 +95,7 @@ class AiderDiffFormatterTest {
     @Test
     @DisplayName("falls back to model name 'unknown' when LLM config is null")
     void unknownModelWhenLlmNull() {
-        var propsNoLlm = new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
-        var f = new AiderDiffFormatter(chatModel, tracker, propsNoLlm, railChain);
+        var propsNoLlm = new BrainProperties(null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);        var f = new AiderDiffFormatter(chatModel, tracker, propsNoLlm, railChain);
         mockChatResponse("ok");
 
         f.generateBlocks("a", "path/F.java", "desc", "");

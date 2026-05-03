@@ -48,7 +48,7 @@ class IngestionServiceIncrementalTest {
         vectorStore = mock(VectorStore.class);
 
         var chunk = new BrainProperties.Chunk(18000, 200);
-        var props = new BrainProperties(null, null, null, chunk, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        var props = new BrainProperties(null, null, null, chunk, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
         var communitySummarizer = mock(com.assurant.brain.retrieval.CommunitySummarizer.class);
         when(communitySummarizer.detectCommunities(any())).thenReturn(java.util.List.of());
         service = new IngestionService(projectRepository, chunkRepository,
