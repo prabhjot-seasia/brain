@@ -109,12 +109,20 @@ public record BrainProperties(
                        int mermaidTimeoutSeconds,
                        String mermaidOutputFormat,
                        int mermaidRenderWidth,
-                       int mermaidRenderScale) {
+                       int mermaidRenderScale,
+                       int mermaidMaxParallel) {
 
         public Docs(String mermaidCliPath, int cacheTtlMinutes, int maxPdfBytes,
                      int maxPrsIncluded, int mermaidTimeoutSeconds) {
             this(mermaidCliPath, cacheTtlMinutes, maxPdfBytes, maxPrsIncluded,
-                    mermaidTimeoutSeconds, "png", 1400, 2);
+                    mermaidTimeoutSeconds, "png", 1400, 2, 1);
+        }
+
+        public Docs(String mermaidCliPath, int cacheTtlMinutes, int maxPdfBytes,
+                     int maxPrsIncluded, int mermaidTimeoutSeconds,
+                     String mermaidOutputFormat, int mermaidRenderWidth, int mermaidRenderScale) {
+            this(mermaidCliPath, cacheTtlMinutes, maxPdfBytes, maxPrsIncluded,
+                    mermaidTimeoutSeconds, mermaidOutputFormat, mermaidRenderWidth, mermaidRenderScale, 1);
         }
     }
 }

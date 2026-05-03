@@ -66,6 +66,8 @@ public class FullDocBundleService {
     private final Executor brainLlmExecutor;
     private final AsyncJobService asyncJobService;
     private final JobEventPublisher jobEventPublisher;
+    private final com.assurant.brain.codegen.SymbolGroundingValidator symbolGroundingValidator;
+    private final com.assurant.brain.codegen.SymbolDictionaryBuilder symbolDictionaryBuilder;
 
     public static final String JOB_TYPE_FULL = "FULL_DOC_BUNDLE";
     public static final String JOB_TYPE_RETRY = "FULL_DOC_BUNDLE_RETRY";
@@ -82,7 +84,9 @@ public class FullDocBundleService {
                                  ObjectMapper objectMapper,
                                  @Qualifier("brainLlmExecutor") Executor brainLlmExecutor,
                                  AsyncJobService asyncJobService,
-                                 JobEventPublisher jobEventPublisher) {
+                                 JobEventPublisher jobEventPublisher,
+                                 com.assurant.brain.codegen.SymbolGroundingValidator symbolGroundingValidator,
+                                 com.assurant.brain.codegen.SymbolDictionaryBuilder symbolDictionaryBuilder) {
         this.repository = repository;
         this.pdfRepository = pdfRepository;
         this.aggregator = aggregator;
@@ -94,6 +98,8 @@ public class FullDocBundleService {
         this.brainLlmExecutor = brainLlmExecutor;
         this.asyncJobService = asyncJobService;
         this.jobEventPublisher = jobEventPublisher;
+        this.symbolGroundingValidator = symbolGroundingValidator;
+        this.symbolDictionaryBuilder = symbolDictionaryBuilder;
     }
 
     private ReentrantLock lockFor(String projectId) {
@@ -113,16 +119,20 @@ public class FullDocBundleService {
         if (projectId == null || projectId.isBlank()) {
             throw new IllegalArgumentException("projectId is required");
         }
+        return startGeneration(projectId, false);
+    }
+
+    public GenerateResult startGeneration(String projectId, boolean forceRefresh) {
         ReentrantLock lock = lockFor(projectId);
         lock.lock();
         try {
-            return startGenerationLocked(projectId);
+            return startGenerationLocked(projectId, forceRefresh);
         } finally {
             lock.unlock();
         }
     }
 
-    private GenerateResult startGenerationLocked(String projectId) {
+    private GenerateResult startGenerationLocked(String projectId, boolean forceRefresh) {
         AsyncJob job = asyncJobService.startOrAttach(JOB_TYPE_FULL, "PROJECT", projectId, projectId);
         if (job.attachedToExisting()) {
             Optional<GeneratedDocument> inFlight = repository.findFirstByProjectIdAndDocTypeAndStatus(
@@ -138,9 +148,14 @@ public class FullDocBundleService {
         String hash = computeHash(aggregate);
 
         OffsetDateTime since = OffsetDateTime.now().minusMinutes(cacheTtlMinutes());
-        List<GeneratedDocument> cached = repository.findCachedFullDoc(
-                projectId, DocType.FULL_PROJECT_PDF, hash, since,
-                List.of(DocGenerationStatus.COMPLETED, DocGenerationStatus.PARTIAL));
+        List<GeneratedDocument> cached = forceRefresh
+                ? List.of()
+                : repository.findCachedFullDoc(
+                        projectId, DocType.FULL_PROJECT_PDF, hash, since,
+                        List.of(DocGenerationStatus.COMPLETED, DocGenerationStatus.PARTIAL));
+        if (forceRefresh) {
+            log.info("Full-doc forceRefresh=true — skipping cache lookup for project={}", projectId);
+        }
         if (!cached.isEmpty()) {
             GeneratedDocument hit = cached.get(0);
             log.info("Full-doc cache hit for project={} document={} hash={}", projectId, hit.getId(), hash);
@@ -371,10 +386,46 @@ public class FullDocBundleService {
     private SectionResult safeGenerateSection(String projectId, DocType type) {
         try {
             String content = docGeneratorService.generate(projectId, "", type);
+            content = groundOrAnnotate(projectId, type, content);
             return SectionResult.ok(type, content);
         } catch (Exception e) {
             log.warn("Section {} failed for project={}: {}", type, projectId, e.getMessage());
             return SectionResult.failed(type, e.getMessage());
+        }
+    }
+
+    private String groundOrAnnotate(String projectId, DocType type, String content) {
+        com.assurant.brain.codegen.SymbolDictionary dict =
+                symbolDictionaryBuilder.build(projectId);
+        if (dict == null || dict == com.assurant.brain.codegen.SymbolDictionary.EMPTY) {
+            return content;
+        }
+
+        var first = symbolGroundingValidator.validateMarkdown(content, dict);
+        if (first.ok()) return content;
+
+        log.info("Section {} for project={} has unknown class refs {} — retrying once with correction",
+                type, projectId, first.issues());
+        String correctionPrompt = "The previously-generated " + type.name()
+                + " section referenced classes that do not exist in this project: "
+                + first.issues()
+                + ". Regenerate the section using ONLY classes that appear in the supplied code context "
+                + "or in the GROUND TRUTH endpoint list. Do not invent new classes.";
+        try {
+            String retry = docGeneratorService.generate(projectId, correctionPrompt, type);
+            var second = symbolGroundingValidator.validateMarkdown(retry, dict);
+            if (second.ok()) {
+                log.info("Section {} for project={} grounded after retry", type, projectId);
+                return retry;
+            }
+            return retry + "\n\n> ⚠ Brain could not verify these references: "
+                    + String.join(", ", second.issues())
+                    + ". Treat them as illustrative.\n";
+        } catch (Exception e) {
+            log.warn("Symbol-grounding retry for {} failed: {}", type, e.getMessage());
+            return content + "\n\n> ⚠ Brain could not verify these references: "
+                    + String.join(", ", first.issues())
+                    + ". Treat them as illustrative.\n";
         }
     }
 

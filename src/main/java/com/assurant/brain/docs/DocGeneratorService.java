@@ -36,6 +36,23 @@ import java.util.UUID;
 @RequiredArgsConstructor
 public class DocGeneratorService {
 
+    private static final String MERMAID_GRAMMAR_RULES = """
+
+            MERMAID SYNTAX RULES (CRITICAL — diagrams that violate these are silently dropped):
+            - Labeled edges use `-->|label|` (NO trailing `>`). WRONG: `A -->|sends|> B`. RIGHT: `A -->|sends| B`.
+            - In `flowchart` / `graph` diagrams, declare nodes inline like `A[Label]`, `B(Round)`, `C{Decision}`.
+              Do NOT use `component`, `node`, `class`, or `interface` keywords — those belong to other diagram types.
+            - In `flowchart` / `graph`, `subgraph Name` is followed by node references, NOT new node declarations with `node`.
+            - For C4 diagrams, the diagram TYPE must be `C4Container` or `C4Component` on line 1, not `graph LR`.
+              Do NOT mix `graph LR` with `component`/`Container`/`System` keywords.
+            - sequenceDiagram: declare participants with `participant Foo`. Messages: `Foo->>Bar: msg` or `Foo-->>Bar: msg`.
+            - classDiagram: relationships use `<|--`, `*--`, `o--`, `-->`, `..>`. No `|>` syntax.
+            - Keep diagrams under 25 nodes — large diagrams overflow the page.
+            - First non-blank line of every fenced ```mermaid block MUST be a valid diagram type:
+              `flowchart TD`, `flowchart LR`, `graph TD`, `graph LR`, `sequenceDiagram`, `classDiagram`,
+              `stateDiagram-v2`, `erDiagram`, `C4Container`, `C4Component`, `gantt`, `journey`.
+            """;
+
     private static final Map<DocType, String> SYSTEM_PROMPTS = Map.of(
             DocType.FLOW_DIAGRAM, """
                     You are a senior software architect generating a **flow diagram** in Mermaid syntax.
@@ -46,7 +63,7 @@ public class DocGeneratorService {
                     4. Key decision points and error paths included
                     Ground every node in the diagram on actual class/method names from the context.
                     Do NOT invent classes or methods not present in the context.
-                    """,
+                    """ + MERMAID_GRAMMAR_RULES,
             DocType.SEQUENCE_DIAGRAM, """
                     You are a senior software architect generating a **sequence diagram** in Mermaid syntax.
                     Given the retrieved code context, produce a Markdown document with:
@@ -55,24 +72,24 @@ public class DocGeneratorService {
                     3. A ```mermaid code block containing a sequenceDiagram
                     4. Include all participants (classes/services) found in the context
                     Ground every participant and message on actual code from the context.
-                    """,
+                    """ + MERMAID_GRAMMAR_RULES,
             DocType.ARCHITECTURE, """
                     You are a senior software architect generating an **architecture overview** document.
                     Given the retrieved code context, conventions, and graph relationships, produce Markdown with:
                     1. Overview section
-                    2. Component diagram in ```mermaid (graph LR or C4)
+                    2. Component diagram in ```mermaid using `flowchart LR` (NOT `graph LR` with `component` keyword)
                     3. Key components with their responsibilities
                     4. Data flow description
                     5. Technology choices and conventions
                     Ground everything on the actual codebase context provided.
-                    """,
+                    """ + MERMAID_GRAMMAR_RULES,
             DocType.EXPLANATION, """
                     You are a senior software engineer writing a clear **technical explanation**.
                     Given the retrieved code context, explain the topic the user asked about.
                     Use Markdown with headings, bullet points, and code snippets from the actual codebase.
                     Include a ```mermaid diagram if it helps explain the flow.
                     Be specific — cite actual class names, method names, and file paths from the context.
-                    """,
+                    """ + MERMAID_GRAMMAR_RULES,
             DocType.CLASS_DIAGRAM, """
                     You are a senior software architect generating a **class diagram** in Mermaid syntax.
                     Given the retrieved code context, produce a Markdown document with:
@@ -80,7 +97,7 @@ public class DocGeneratorService {
                     2. A ```mermaid code block containing a classDiagram
                     3. Include inheritance, composition, and key methods
                     Ground every class and relationship on actual code from the context.
-                    """
+                    """ + MERMAID_GRAMMAR_RULES
     );
 
     private final ChatModel chatModel;
@@ -92,6 +109,7 @@ public class DocGeneratorService {
     private final TokenUsageTracker tokenUsageTracker;
     private final GeneratedDocumentRepository documentRepository;
     private final RailChain railChain;
+    private final RealEndpointRegistry realEndpointRegistry;
 
     public String generate(String projectId, String userPrompt, DocType docType) {
         log.info("Generating {} for project={}, prompt='{}'", docType, projectId, userPrompt);
@@ -110,6 +128,7 @@ public class DocGeneratorService {
         String ragContext = retrieveRagContext(projectId, sanitizedPrompt);
         String conventions = retrieveConventions(projectId);
         String graphContext = retrieveGraphContext(projectId, sanitizedPrompt);
+        String realEndpoints = realEndpointRegistry.formatForPrompt(projectId);
 
         String systemPrompt = SYSTEM_PROMPTS.getOrDefault(docType, SYSTEM_PROMPTS.get(DocType.EXPLANATION));
 
@@ -129,8 +148,14 @@ public class DocGeneratorService {
                         --- GRAPH CONTEXT (modules/classes) ---
                         %s
 
-                        Generate the document now.
-                        """.formatted(projectId, sanitizedPrompt, ragContext, conventions, graphContext))
+                        --- GROUND TRUTH: REAL ENDPOINTS ---
+                        %s
+
+                        Generate the document now. Do NOT mention any controller / service / class
+                        that is not present in the code context above or the ground-truth list.
+                        Test classes (names ending with Test, IT, Spec) are NEVER part of the API surface.
+                        """.formatted(projectId, sanitizedPrompt, ragContext, conventions, graphContext,
+                                realEndpoints.isBlank() ? "(no @RestController classes detected for this project)" : realEndpoints))
         ));
 
         long startMs = System.currentTimeMillis();
@@ -178,25 +203,46 @@ public class DocGeneratorService {
         BrainProperties.Rag rag = brainProperties.rag();
         var b = new FilterExpressionBuilder();
 
-        List<Document> codeDocs = vectorStore.similaritySearch(
+        int oversample = 2;
+        List<Document> codeRaw = vectorStore.similaritySearch(
                 SearchRequest.builder()
                         .query(query)
-                        .topK(rag.topKCode())
+                        .topK(rag.topKCode() * oversample)
                         .filterExpression(b.and(
                                 b.eq("projectId", projectId),
                                 b.eq("sourceType", "CODE")).build())
                         .build());
 
-        List<Document> docDocs = vectorStore.similaritySearch(
+        List<Document> docRaw = vectorStore.similaritySearch(
                 SearchRequest.builder()
                         .query(query)
-                        .topK(rag.topKDoc())
+                        .topK(rag.topKDoc() * oversample)
                         .filterExpression(b.and(
                                 b.eq("projectId", projectId),
                                 b.eq("sourceType", "DOC")).build())
                         .build());
 
+        List<Document> codeDocs = pruneTestPaths(codeRaw, rag.topKCode());
+        List<Document> docDocs = pruneTestPaths(docRaw, rag.topKDoc());
+
         return ContextWindowManager.buildContext(codeDocs, docDocs, rag.maxContextTokens(), rag.docTrustWeight());
+    }
+
+    private static List<Document> pruneTestPaths(List<Document> docs, int topK) {
+        return docs.stream()
+                .filter(d -> !isTestShapedPath(String.valueOf(d.getMetadata().get("filePath"))))
+                .limit(topK)
+                .toList();
+    }
+
+    private static boolean isTestShapedPath(String filePath) {
+        if (filePath == null || filePath.isBlank() || "null".equals(filePath)) return false;
+        String normalised = filePath.replace('\\', '/');
+        if (normalised.contains("/src/test/") || normalised.contains("/src/it/")) return true;
+        int slash = normalised.lastIndexOf('/');
+        String name = slash >= 0 ? normalised.substring(slash + 1) : normalised;
+        return name.endsWith("Test.java") || name.endsWith("IT.java")
+                || name.endsWith("Tests.java") || name.endsWith("Spec.java");
     }
 
     private String retrieveConventions(String projectId) {

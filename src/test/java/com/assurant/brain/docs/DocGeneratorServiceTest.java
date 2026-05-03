@@ -64,8 +64,11 @@ class DocGeneratorServiceTest {
                 new com.assurant.brain.guardrail.RailChain.ChainResult(inv.getArgument(0), List.of()));
         when(railChain.applyPostLlm(any())).thenAnswer(inv ->
                 new com.assurant.brain.guardrail.RailChain.ChainResult(inv.getArgument(0), List.of()));
+        var realEndpointRegistry = mock(com.assurant.brain.docs.RealEndpointRegistry.class);
+        when(realEndpointRegistry.formatForPrompt(anyString())).thenReturn("");
         service = new DocGeneratorService(chatModel, vectorStore, conventionRepo, projectRepo,
-                props, semanticCacheService, tokenUsageTracker, documentRepository, railChain);
+                props, semanticCacheService, tokenUsageTracker, documentRepository, railChain,
+                realEndpointRegistry);
     }
 
     @Test

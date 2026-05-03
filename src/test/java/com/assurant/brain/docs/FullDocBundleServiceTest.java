@@ -68,9 +68,14 @@ class FullDocBundleServiceTest {
         when(asyncJobs.markSucceeded(any(), any())).thenAnswer(inv -> stubJob(inv.getArgument(0), com.assurant.brain.jobs.AsyncJobStatus.SUCCEEDED));
         when(asyncJobs.markPartial(any(), any())).thenAnswer(inv -> stubJob(inv.getArgument(0), com.assurant.brain.jobs.AsyncJobStatus.PARTIAL));
         when(asyncJobs.markFailed(any(), anyString())).thenAnswer(inv -> stubJob(inv.getArgument(0), com.assurant.brain.jobs.AsyncJobStatus.FAILED));
+        var symbolValidator = mock(com.assurant.brain.codegen.SymbolGroundingValidator.class);
+        when(symbolValidator.validateMarkdown(anyString(), any()))
+                .thenReturn(com.assurant.brain.codegen.SymbolGroundingValidator.GroundingResult.clean());
+        var symbolDictBuilder = mock(com.assurant.brain.codegen.SymbolDictionaryBuilder.class);
+        when(symbolDictBuilder.build(anyString())).thenReturn(com.assurant.brain.codegen.SymbolDictionary.EMPTY);
         service = new FullDocBundleService(repository, pdfRepo, aggregator, docGeneratorService,
                 mermaidPreRenderer, markdownPdfRenderer, props, new ObjectMapper(), directExecutor,
-                asyncJobs, jobEvents);
+                asyncJobs, jobEvents, symbolValidator, symbolDictBuilder);
 
         when(aggregator.aggregate(anyString())).thenReturn(emptyAggregate("proj-1"));
         when(repository.findFirstByProjectIdAndDocTypeAndStatus(anyString(), any(), any()))

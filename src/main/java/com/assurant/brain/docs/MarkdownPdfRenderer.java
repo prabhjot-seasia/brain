@@ -42,8 +42,8 @@ public class MarkdownPdfRenderer {
             table { border-collapse: collapse; width: 100%; margin: 8pt 0; }
             th, td { border: 1pt solid #ddd; padding: 4pt 6pt; text-align: left; font-size: 10pt; }
             th { background: #f0f4f8; }
-            .mermaid-svg svg { max-width: 100%; height: auto; }
-            .mermaid-png img { max-width: 100%; height: auto; }
+            .mermaid-svg svg { max-width: 170mm; width: 100%; height: auto; }
+            .mermaid-png img { max-width: 170mm; width: 100%; height: auto; -fs-fit-images-to-width: 170mm; }
             .mermaid-png { text-align: center; margin: 8pt 0; page-break-inside: avoid; }
             .cover-page { text-align: center; padding-top: 80pt; page-break-after: always; }
             .cover-page h1 { font-size: 32pt; border: none; }

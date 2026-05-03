@@ -167,6 +167,13 @@ Path-traversal guards reject keys with `..`/absolute prefixes/null bytes; `Sandb
 | `BRAIN_DOCS_MAX_PDF_BYTES` | `52428800` (50 MB) | Hard cap on `/docs/{id}/pdf` response. Above this the controller returns 413 instead of streaming the blob. |
 | `BRAIN_DOCS_MAX_PRS_INCLUDED` | `20` | How many recent PullRequestRecords are pulled into the bundle's "Recent Pull Requests" section. |
 | `BRAIN_DOCS_MERMAID_TIMEOUT_SECONDS` | `30` | Per-diagram wall-clock cap on `mmdc` invocation. Exceeded → diagram falls back to fenced markdown source (best-effort, doesn't fail the bundle). |
+| `BRAIN_DOCS_MERMAID_OUTPUT_FORMAT` | `png` | `png` (default) renders diagrams as PNG attachments embedded via data-URI; `svg` keeps the legacy inline-SVG path (Flying Saucer's SVG support is flaky — only switch back if you have a specific need). |
+| `BRAIN_DOCS_MERMAID_RENDER_WIDTH` | `900` | Pixel width passed to `mmdc --width`. Sized to fit A4 content area (~178 mm) at 96 DPI; `--scale 2` doubles it for crispness. |
+| `BRAIN_DOCS_MERMAID_RENDER_SCALE` | `2` | `mmdc --scale` multiplier. Higher = crisper PNG, larger file. |
+| `BRAIN_DOCS_MERMAID_MAX_PARALLEL` | `1` | Maximum concurrent `mmdc` invocations. Chromium can collide under contention (intermittent `Failed to launch the browser process` errors); default `1` serialises renders. AWS Fargate tasks with ≥4 vCPU can safely bump to `2`–`3`. |
+| `BRAIN_DOCS_MERMAID_DEBUG` | `false` | Set `true` to attach `DEBUG=puppeteer:browsers:launcher` to mmdc's environment so failed launches log the full chromium command line and stderr. Diagnostic only — leave `false` in production. |
+| `BRAIN_DOCS_MERMAID_RETRY_ATTEMPTS` | `3` | Per-diagram retry budget for transient mmdc failures. Parser errors short-circuit (deterministic — no retry). |
+| `BRAIN_DOCS_PUPPETEER_CONFIG_PATH` | _(empty)_ | Optional absolute path to a puppeteer config JSON. When set, Java passes `-p <path>` directly to `mmdc`, bypassing any wrapper script. Required on Alpine (set to `/etc/mmdc/puppeteer-config.json` in the runtime image) because the wrapper-injected flags don't propagate when mmdc is spawned by the JVM. |
 
 The Mermaid SVG injection is post-Markdown via placeholder tokens — commonmark renders with `escapeHtml(true)` and `sanitizeUrls(true)`, and Flying Saucer parses the wrapped XHTML through a hardened `DocumentBuilder` (no DOCTYPE, no external entities, no external DTD, no-op `EntityResolver`) so LLM-supplied markdown can't smuggle XSS or XXE into the PDF.
 

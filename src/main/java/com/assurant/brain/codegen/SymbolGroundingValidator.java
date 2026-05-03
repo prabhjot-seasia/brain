@@ -41,6 +41,42 @@ public class SymbolGroundingValidator {
         }
     }
 
+    private static final java.util.regex.Pattern CAMEL_CLASS_REF = java.util.regex.Pattern.compile(
+            "\\b([A-Z][A-Za-z0-9]+(?:Service|Controller|Repository|Client|Manager|Facade|Resolver|Handler|Provider|Factory|Helper|Builder|Listener|Strategy))\\b");
+
+    private static final Set<String> MARKDOWN_ALLOWLIST = Set.of(
+            "RestController", "Controller", "Service", "Repository", "Component",
+            "Configuration", "Bean", "Autowired", "RequiredArgsConstructor",
+            "Transactional", "Async", "Slf4j", "Log4j2", "ChatModel", "VectorStore",
+            "JpaRepository", "Neo4jRepository", "ApiClient", "JsonNode", "ObjectMapper",
+            "MockMvc", "WebTestClient", "TestContainer", "ContextManager");
+
+    public GroundingResult validateMarkdown(String md, SymbolDictionary dictionary) {
+        if (md == null || md.isBlank()) return GroundingResult.clean();
+        if (dictionary == null || dictionary == SymbolDictionary.EMPTY) return GroundingResult.clean();
+
+        Set<String> simpleNamesInDict = new LinkedHashSet<>();
+        for (String fqn : dictionary.classes()) {
+            int dot = fqn.lastIndexOf('.');
+            simpleNamesInDict.add(dot >= 0 ? fqn.substring(dot + 1) : fqn);
+        }
+
+        Set<String> referencedButUnknown = new LinkedHashSet<>();
+        java.util.regex.Matcher m = CAMEL_CLASS_REF.matcher(stripFencedBlocks(md));
+        while (m.find()) {
+            String name = m.group(1);
+            if (MARKDOWN_ALLOWLIST.contains(name)) continue;
+            if (simpleNamesInDict.contains(name)) continue;
+            referencedButUnknown.add(name);
+        }
+        if (referencedButUnknown.isEmpty()) return GroundingResult.clean();
+        return new GroundingResult(false, referencedButUnknown.stream().toList());
+    }
+
+    private String stripFencedBlocks(String md) {
+        return md.replaceAll("(?s)```.*?```", "");
+    }
+
     public GroundingResult validate(Map<String, String> generatedFiles, SymbolDictionary dictionary) {
         if (dictionary == null || dictionary == SymbolDictionary.EMPTY) {
             log.debug("SymbolGroundingValidator: empty dictionary, skipping (project not yet ingested?)");

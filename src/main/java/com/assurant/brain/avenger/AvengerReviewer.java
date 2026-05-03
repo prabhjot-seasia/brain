@@ -69,6 +69,7 @@ public class AvengerReviewer {
     private final MirageReviewer mirageReviewer;
     private final VectorStore vectorStore;
     private final com.assurant.brain.sage.SageInquisitor sageInquisitor;
+    private final com.assurant.brain.avenger.checks.ItControllerEntryCheck itControllerEntryCheck;
 
     private static final int MIRAGE_BASELINE_SAMPLES = 30;
 
@@ -111,7 +112,26 @@ public class AvengerReviewer {
         int tokensIn = 0;
         int tokensOut = 0;
 
-        if (request.avenger() == AvengerType.STARK) {
+        if (request.avenger() == AvengerType.THANOS) {
+            com.assurant.brain.avenger.checks.ItControllerEntryCheck.CheckResult itCheck =
+                    itControllerEntryCheck.check(sanitizedCode);
+            if (itCheck.violation()) {
+                verdict = AvengerVerdict.BLOCKED;
+                issues = itCheck.findings();
+                summary = "BLOCKED: integration test mocks or instantiates a @RestController. ITs must hit the real controller via MockMvc.";
+                long latencyMs = System.currentTimeMillis() - startMs;
+                AvengerReview saved = persist(request, verdict, issues, summary, 0, 0, latencyMs);
+                recordLearningEvents(request, issues);
+                avengerMemory.invalidate(request.avenger(), request.projectId());
+                return new AvengerResponse(saved.getId(), request.avenger(), verdict, issues, summary, latencyMs);
+            }
+            LlmReviewResult llm = reviewWithLlm(request, sanitizedCode);
+            verdict = llm.verdict;
+            issues = llm.issues;
+            summary = llm.summary;
+            tokensIn = llm.tokensIn;
+            tokensOut = llm.tokensOut;
+        } else if (request.avenger() == AvengerType.STARK) {
             StarkResult stark = reviewWithStark(sanitizedCode);
             verdict = stark.verdict;
             issues = stark.issues;

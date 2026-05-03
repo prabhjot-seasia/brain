@@ -88,7 +88,8 @@ class AvengerReviewerTest {
                 mock(com.assurant.brain.jobs.AsyncJobService.class),
                 new MirageReviewer(new com.assurant.brain.codegen.StyleFingerprintBuilder()),
                 mock(org.springframework.ai.vectorstore.VectorStore.class),
-                sage);
+                sage,
+                new com.assurant.brain.avenger.checks.ItControllerEntryCheck());
     }
 
     @Test

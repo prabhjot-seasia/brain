@@ -24,9 +24,15 @@ public interface ProjectNodeRepository extends Neo4jRepository<ProjectNode, Stri
             @Param("category") String category);
 
     @Query("""
-            MATCH (p:Project {id: $projectId})-[:HAS_MODULE|HAS_CLASS*1..3]->(c:Class)
-            WHERE toLower(c.name) CONTAINS toLower($keyword)
-               OR toLower(c.qualifiedName) CONTAINS toLower($keyword)
+            MATCH (c:Class {projectId: $projectId})
+            WHERE (toLower(c.name) CONTAINS toLower($keyword)
+                OR toLower(c.qualifiedName) CONTAINS toLower($keyword))
+              AND NOT coalesce(c.filePath, '') CONTAINS '/src/test/'
+              AND NOT coalesce(c.filePath, '') CONTAINS '/src/it/'
+              AND NOT c.qualifiedName ENDS WITH 'IT'
+              AND NOT c.qualifiedName ENDS WITH 'Test'
+              AND NOT c.qualifiedName ENDS WITH 'Tests'
+              AND NOT c.qualifiedName ENDS WITH 'Spec'
             RETURN c
             LIMIT 20
             """)

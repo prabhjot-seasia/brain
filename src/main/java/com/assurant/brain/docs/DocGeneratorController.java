@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -138,13 +139,14 @@ public class DocGeneratorController {
 
     @PostMapping("/full/{projectId}")
     @PreAuthorize("@projectAccess.canWrite(#projectId)")
-    public ResponseEntity<?> generateFull(@PathVariable String projectId) {
+    public ResponseEntity<?> generateFull(@PathVariable String projectId,
+                                          @RequestParam(name = "forceRefresh", defaultValue = "false") boolean forceRefresh) {
         try {
             fullDocRateLimiter.check("full:" + projectId);
         } catch (FullDocRateLimiter.RateLimitExceededException e) {
             return ResponseEntity.status(429).body(new ErrorResponse(e.getMessage()));
         }
-        FullDocBundleService.GenerateResult result = fullDocBundleService.startGeneration(projectId);
+        FullDocBundleService.GenerateResult result = fullDocBundleService.startGeneration(projectId, forceRefresh);
         FullDocStartResponse body = toStartResponse(result);
         return result.fromCache()
                 ? ResponseEntity.ok(body)

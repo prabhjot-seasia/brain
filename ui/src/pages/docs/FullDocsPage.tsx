@@ -13,6 +13,8 @@ import Chip from '@mui/material/Chip'
 import Alert from '@mui/material/Alert'
 import CircularProgress from '@mui/material/CircularProgress'
 import TextField from '@mui/material/TextField'
+import FormControlLabel from '@mui/material/FormControlLabel'
+import Checkbox from '@mui/material/Checkbox'
 import {
   brainApi,
   type Project,
@@ -26,6 +28,8 @@ import {
   startWatchingJob,
 } from '../../components/widgets'
 import DownloadIcon from '@mui/icons-material/Download'
+import LinearProgress from '@mui/material/LinearProgress'
+import Divider from '@mui/material/Divider'
 
 const SECTIONS = ['ARCHITECTURE', 'SEQUENCE_DIAGRAM', 'CLASS_DIAGRAM', 'FLOW_DIAGRAM', 'EXPLANATION']
 const POLL_MS = 3000
@@ -64,6 +68,7 @@ export default function FullDocsPage() {
   const [confluenceSpaceKey, setConfluenceSpaceKey] = useState<string>('')
   const [confluenceParentPageId, setConfluenceParentPageId] = useState<string>('')
   const [confluenceMessage, setConfluenceMessage] = useState<string | null>(null)
+  const [forceRefresh, setForceRefresh] = useState(false)
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
@@ -112,7 +117,7 @@ export default function FullDocsPage() {
     if (!projectId) return
     setError(null); setConfluenceMessage(null); setBusy(true); setStatus(null)
     try {
-      const start = await brainApi.generateFullDocs(projectId)
+      const start = await brainApi.generateFullDocs(projectId, forceRefresh)
       const initial = await brainApi.getFullDocStatus(start.documentId)
       setStatus({ ...initial, fromCache: !!start.fromCache })
       if (start.jobId && start.attachedToExisting) {
@@ -189,6 +194,7 @@ export default function FullDocsPage() {
 
   const badge = provenanceBadge(status)
   const failedCount = status ? Object.values(status.sectionResults || {}).filter(v => v === 'FAILED').length : 0
+  const completedCount = status ? Object.values(status.sectionResults || {}).filter(v => v === 'OK').length : 0
 
   return (
     <Box>
@@ -209,8 +215,8 @@ export default function FullDocsPage() {
 
       <Card sx={{ mb: 3 }}>
         <CardContent>
-          <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2} alignItems={{ sm: 'center' }} sx={{ mb: 2 }}>
-            <FormControl size="small" sx={{ minWidth: { xs: '100%', sm: 280 } }}>
+          <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} alignItems={{ md: 'flex-end' }}>
+            <FormControl size="small" sx={{ minWidth: { xs: '100%', md: 320 } }}>
               <InputLabel id="full-docs-project-label">Project</InputLabel>
               <Select labelId="full-docs-project-label" label="Project"
                       value={projectId} onChange={e => setProjectId(String(e.target.value))}>
@@ -218,86 +224,125 @@ export default function FullDocsPage() {
               </Select>
             </FormControl>
 
-            <Button variant="contained" disabled={!projectId || busy} onClick={generate}
-                    startIcon={busy ? <CircularProgress size={16} /> : null}>
-              Generate Full Documentation PDF
+            <Box sx={{ flexGrow: 1 }} />
+
+            <FormControlLabel
+              control={<Checkbox size="small"
+                                 checked={forceRefresh}
+                                 onChange={e => setForceRefresh(e.target.checked)}
+                                 disabled={busy} />}
+              label={<Typography variant="body2">Force refresh (skip cache)</Typography>}
+              sx={{ m: 0 }}
+            />
+
+            <Button size="large" variant="contained"
+                    disabled={!projectId || busy} onClick={generate}
+                    startIcon={busy ? <CircularProgress size={16} color="inherit" /> : null}>
+              {busy ? 'Generating…' : 'Generate'}
             </Button>
           </Stack>
 
+          <Divider sx={{ my: 2 }} />
+
+          <Typography variant="subtitle2" sx={{ mb: 1 }}>Confluence target (optional)</Typography>
           <Stack direction={{ xs: 'column', sm: 'row' }} spacing={2}>
-            <TextField size="small" label="Confluence space key (optional)"
+            <TextField size="small" label="Space key"
                        value={confluenceSpaceKey}
                        onChange={e => setConfluenceSpaceKey(e.target.value)}
-                       helperText="e.g. ENG"
+                       placeholder="ENG"
                        sx={{ minWidth: { xs: '100%', sm: 200 } }} />
-            <TextField size="small" label="Confluence parent page ID (optional)"
+            <TextField size="small" label="Parent page ID"
                        value={confluenceParentPageId}
                        onChange={e => setConfluenceParentPageId(e.target.value)}
-                       helperText="e.g. 123456789"
+                       placeholder="123456789"
                        sx={{ minWidth: { xs: '100%', sm: 240 } }} />
           </Stack>
           <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
-            Provide both fields to also publish the bundle to Confluence after generation.
-            Leave blank to skip. Subsequent merges to this project will auto-update the same page.
+            Provide both to publish the bundle to Confluence after generation.
+            Subsequent PR merges auto-update the same page.
           </Typography>
         </CardContent>
       </Card>
 
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          {status && status.generatedAt && (
-            <Chip size="small" color={badge.color} label={badge.label} sx={{ mb: 2 }} />
-          )}
+      {status && (
+        <Card sx={{ mb: 3 }}>
+          <CardContent>
+            <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.5} alignItems={{ sm: 'center' }} sx={{ mb: 2 }}>
+              <Typography variant="h6" sx={{ flexGrow: 1 }}>Generation status</Typography>
+              <WidgetStatusChip status={status.status} />
+              {status.generatedAt && <Chip size="small" color={badge.color} label={badge.label} variant="outlined" />}
+            </Stack>
 
-          {status && (
-            <Box sx={{ mt: 3 }}>
-              <Typography variant="subtitle2" sx={{ mb: 1 }}>Sections</Typography>
-              <Stack spacing={1}>
-                {SECTIONS.map(s => {
-                  const v = status.sectionResults?.[s] ?? 'PENDING'
-                  const available = (status.availablePdfTypes ?? []).includes(s as never)
-                  return (
-                    <Box key={s} sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
-                      <Chip size="small" color={statusColor(v)} label={`${s.replace('_', ' ')}: ${v}`} />
-                      {available && (
-                        <Button
-                          size="small"
-                          startIcon={<DownloadIcon fontSize="small" />}
-                          onClick={() => downloadType(status.id, s)}
-                        >
-                          PDF
-                        </Button>
-                      )}
-                    </Box>
-                  )
-                })}
+            {(status.status === 'GENERATING' || status.status === 'PENDING') && (
+              <Box sx={{ mb: 2 }}>
+                <LinearProgress
+                  variant="determinate"
+                  value={SECTIONS.length === 0 ? 0 : (completedCount / SECTIONS.length) * 100}
+                />
+                <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                  {completedCount} of {SECTIONS.length} sections complete
+                </Typography>
+              </Box>
+            )}
+
+            {(status.status === 'COMPLETED' || status.status === 'PARTIAL') && (
+              <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1} sx={{ mb: 2 }}>
+                <Button variant="contained" startIcon={<DownloadIcon />}
+                        onClick={() => download(status.id)}>
+                  Download Full PDF
+                </Button>
+                {status.status === 'PARTIAL' && (
+                  <Button variant="outlined" color="warning" disabled={busy} onClick={retryFailed}>
+                    Retry failed sections
+                  </Button>
+                )}
               </Stack>
+            )}
 
-              {status.status === 'COMPLETED' && (
-                <Box sx={{ mt: 2 }}>
-                  <Button variant="outlined" onClick={() => download(status.id)}>Download PDF</Button>
-                </Box>
-              )}
-              {status.status === 'PARTIAL' && (
-                <Box sx={{ mt: 2 }}>
-                  <Alert severity="warning" sx={{ mb: 1 }}>
-                    {failedCount} of {SECTIONS.length} sections failed. PDF available with the rest.
-                  </Alert>
-                  <Stack direction="row" spacing={1}>
-                    <Button variant="outlined" onClick={() => download(status.id)}>Download PDF</Button>
-                    <Button variant="outlined" color="warning" disabled={busy} onClick={retryFailed}>
-                      Retry failed sections
-                    </Button>
-                  </Stack>
-                </Box>
-              )}
-              {status.status === 'FAILED' && (
-                <Alert severity="error" sx={{ mt: 2 }}>{status.error || 'Generation failed.'}</Alert>
-              )}
-            </Box>
-          )}
-        </CardContent>
-      </Card>
+            {status.status === 'PARTIAL' && (
+              <Alert severity="warning" sx={{ mb: 2 }}>
+                {failedCount} of {SECTIONS.length} sections failed. Full PDF available with the rest.
+              </Alert>
+            )}
+            {status.status === 'FAILED' && (
+              <Alert severity="error" sx={{ mb: 2 }}>{status.error || 'Generation failed.'}</Alert>
+            )}
+
+            <Typography variant="subtitle2" sx={{ mb: 1, mt: 1 }}>Sections</Typography>
+            <ResponsiveTable
+              rows={SECTIONS.map(s => ({
+                key: s,
+                name: s.replace(/_/g, ' '),
+                state: status.sectionResults?.[s] ?? 'PENDING',
+                available: (status.availablePdfTypes ?? []).includes(s as never),
+              }))}
+              rowKey={row => row.key}
+              columns={[
+                {
+                  key: 'name',
+                  label: 'Section',
+                  primary: true,
+                  render: row => row.name,
+                },
+                {
+                  key: 'state',
+                  label: 'Status',
+                  render: row => <Chip size="small" color={statusColor(row.state)} label={row.state} />,
+                },
+                {
+                  key: 'pdf',
+                  label: 'PDF',
+                  align: 'right',
+                  render: row => row.available
+                    ? <Button size="small" startIcon={<DownloadIcon fontSize="small" />}
+                              onClick={() => downloadType(status.id, row.key)}>Download</Button>
+                    : <Typography variant="caption" color="text.secondary">—</Typography>,
+                },
+              ]}
+            />
+          </CardContent>
+        </Card>
+      )}
 
       <Typography variant="h6" sx={{ mb: 1 }}>Recent Documentation</Typography>
 

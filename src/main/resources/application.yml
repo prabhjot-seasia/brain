@@ -228,6 +228,7 @@ brain:
     mermaid-output-format: ${BRAIN_DOCS_MERMAID_OUTPUT_FORMAT:png}
     mermaid-render-width: ${BRAIN_DOCS_MERMAID_RENDER_WIDTH:1400}
     mermaid-render-scale: ${BRAIN_DOCS_MERMAID_RENDER_SCALE:2}
+    mermaid-max-parallel: ${BRAIN_DOCS_MERMAID_MAX_PARALLEL:1}
   jobs:
     sse-heartbeat-ms: ${BRAIN_JOBS_SSE_HEARTBEAT_MS:15000}
     retention-days: ${BRAIN_JOBS_RETENTION_DAYS:90}
@@ -408,6 +409,7 @@ brain:
     mermaid-output-format: ${BRAIN_DOCS_MERMAID_OUTPUT_FORMAT:png}
     mermaid-render-width: ${BRAIN_DOCS_MERMAID_RENDER_WIDTH:1400}
     mermaid-render-scale: ${BRAIN_DOCS_MERMAID_RENDER_SCALE:2}
+    mermaid-max-parallel: ${BRAIN_DOCS_MERMAID_MAX_PARALLEL:1}
   jobs:
     sse-heartbeat-ms: ${BRAIN_JOBS_SSE_HEARTBEAT_MS:15000}
     retention-days: ${BRAIN_JOBS_RETENTION_DAYS:90}

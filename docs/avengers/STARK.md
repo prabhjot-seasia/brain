@@ -59,6 +59,15 @@ Every code change must pass these checks. No exceptions.
 - When updating, verify compatibility across the full stack: `build.gradle`, `application.yml`, `Dockerfile`, CI workflows, CDK.
 - Check for CVEs in dependencies. No known-vulnerable versions.
 
+### Integration test discipline
+
+- An integration test for an HTTP endpoint MUST:
+  - Use `@SpringBootTest` (or `@WebMvcTest` if scoped) plus `MockMvc` / `WebTestClient`.
+  - Hit the real `@RestController` URL; never instantiate the controller class directly; never `@MockBean` the controller class.
+  - Exercise the real `@PreAuthorize` / filter chain.
+  - Mock only at external boundaries: third-party HTTP clients, `ChatModel`, `JiraClient`, `GitHubClient`, S3 / Bedrock SDK clients.
+- A test that mocks the controller class, instantiates it with `new`, or bypasses Spring is a **unit test of the controller**, never an "IT". Naming a unit test `*IT.java` is misleading and BLOCKED.
+
 ---
 
 ## Output Contract

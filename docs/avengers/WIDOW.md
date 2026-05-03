@@ -70,6 +70,18 @@ cd ui && npx vitest run --coverage     # Frontend: tests + coverage verification
 
 Both must pass before any PR is submitted.
 
+### Integration test discipline (BLOCKING)
+
+- Every `*IT.java` file MUST enter through the real HTTP layer:
+  - `@SpringBootTest` (or `@WebMvcTest`) + `MockMvc` / `WebTestClient` against the real `@RestController` URL.
+  - Real `@PreAuthorize`, filter chain, and request mapping in play.
+- An IT MUST NOT:
+  - `@MockBean` the controller class under test.
+  - Instantiate the controller via `new SomethingController(...)`.
+  - Call controller methods directly (skipping the dispatcher).
+- Mock only at **external boundaries**: third-party HTTP clients, `ChatModel`, `JiraClient`, `GitHubClient`, AWS SDK clients, paid-API clients. Never the controller, never the service-under-test.
+- A test that violates these rules is a **unit test misnamed as IT** — request `CHANGES_REQUESTED` with the rename, or BLOCK if the violation is destructive (e.g. mocking `@PreAuthorize` away).
+
 ---
 
 ## Output Contract

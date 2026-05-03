@@ -210,8 +210,10 @@ export const brainApi = {
   getOracleBudget: (projectId: string) =>
     client.get<OracleBudget>(`/avengers/oracle/budget/${projectId}`).then(r => r.data),
 
-  generateFullDocs: (projectId: string) =>
-    client.post<FullDocStartResponse>(`/docs/full/${projectId}`).then(r => r.data),
+  generateFullDocs: (projectId: string, forceRefresh = false) =>
+    client.post<FullDocStartResponse>(`/docs/full/${projectId}`, null, {
+      params: forceRefresh ? { forceRefresh: true } : undefined,
+    }).then(r => r.data),
 
   getFullDocStatus: (documentId: string) =>
     client.get<FullDocStatusResponse>(`/docs/full/status/${documentId}`).then(r => r.data),

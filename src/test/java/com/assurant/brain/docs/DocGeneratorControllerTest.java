@@ -175,7 +175,7 @@ class DocGeneratorControllerTest {
         UUID id = UUID.randomUUID();
         when(fullDocBundleService.startGeneration("proj-1"))
                 .thenReturn(new FullDocBundleService.GenerateResult(id, DocGenerationStatus.GENERATING, false, null));
-        var resp = controller.generateFull("proj-1");
+        var resp = controller.generateFull("proj-1", false);
         assertThat(resp.getStatusCode().value()).isEqualTo(202);
         var body = (com.assurant.brain.docs.dto.FullDocStartResponse) resp.getBody();
         assertThat(body.documentId()).isEqualTo(id);
@@ -189,7 +189,7 @@ class DocGeneratorControllerTest {
         when(fullDocBundleService.startGeneration("proj-1"))
                 .thenReturn(new FullDocBundleService.GenerateResult(id, DocGenerationStatus.COMPLETED, true,
                         java.time.OffsetDateTime.now()));
-        var resp = controller.generateFull("proj-1");
+        var resp = controller.generateFull("proj-1", false);
         assertThat(resp.getStatusCode().value()).isEqualTo(200);
         var body = (com.assurant.brain.docs.dto.FullDocStartResponse) resp.getBody();
         assertThat(body.fromCache()).isTrue();
@@ -246,7 +246,7 @@ class DocGeneratorControllerTest {
     void generateFullRateLimited() {
         org.mockito.Mockito.doThrow(new FullDocRateLimiter.RateLimitExceededException("burst"))
                 .when(rateLimiter).check("full:proj-1");
-        var resp = controller.generateFull("proj-1");
+        var resp = controller.generateFull("proj-1", false);
         assertThat(resp.getStatusCode().value()).isEqualTo(429);
     }
 

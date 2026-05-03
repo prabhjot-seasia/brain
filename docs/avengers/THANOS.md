@@ -102,6 +102,16 @@ These rules exist because LLM-emitted code routinely calls methods that don't ex
 
 Skipping any of #1–#6 on a PR that introduces a new code-generation path is `BLOCKED`. The pattern of "we'll add MIRAGE later" or "we'll wire the boundary later" is exactly what produced the hallucination + scope-creep frustration UX-Q4 was created to fix. No exceptions.
 
+### 2.7 — Integration-test discipline (UX-Q8 hard rule)
+
+Any `*IT.java` file that any of the following is **BLOCKED** — not `CHANGES_REQUESTED`:
+
+- Contains `@MockBean` whose target type resolves to a `@RestController` class (verified via `ClassNode` graph: qualifiedName ends with `Controller` and filePath is not test-shaped).
+- Instantiates a `@RestController` directly: `new SomethingController(...)`.
+- Calls a `@RestController` method directly without going through `MockMvc` / `WebTestClient` (`controller.handleFoo(...)` in test code).
+
+ITs MUST enter through the real HTTP layer (`MockMvc` against the real controller bean). Mocks belong at external boundaries only — third-party HTTP clients, `ChatModel`, `JiraClient`, `GitHubClient`, AWS SDK clients. The pattern of "controller-mocked IT" hides exactly the integration bugs the IT exists to catch. This rule originated from the UX-Q8 IMEI doc-bundle review where Brain documented `FBBEligibilityControllerIT` as a real production API — the file was named "IT" but mocked the controller it claimed to integrate against.
+
 ### 2.2 — Training STRANGE
 
 STRANGE is the newest Avenger (joined 2026-04-28). THANOS owns its on-the-job training.
