@@ -12,7 +12,8 @@ public enum AvengerType {
     MANTIS(AvengerRole.SERVICE, AvengerDomain.LEARNING),
     JARVIS(AvengerRole.SUPPORT, AvengerDomain.INFRASTRUCTURE),
     THANOS(AvengerRole.SUPPORT, AvengerDomain.OVERSIGHT),
-    MIRAGE(AvengerRole.SERVICE, AvengerDomain.STYLE_FIT);
+    MIRAGE(AvengerRole.SERVICE, AvengerDomain.STYLE_FIT),
+    SAGE(AvengerRole.SERVICE, AvengerDomain.PROJECT_KNOWLEDGE);
 
     private final AvengerRole role;
     private final AvengerDomain domain;

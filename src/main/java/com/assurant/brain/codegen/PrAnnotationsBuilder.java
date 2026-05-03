@@ -34,6 +34,7 @@ public class PrAnnotationsBuilder {
 
     public String renderPrBody(String projectId, Map<String, String> generatedFiles, String planSummary) {
         MirageReviewer.Report mirageReport = runMirage(projectId, generatedFiles);
+        TestCounts counts = countTests(generatedFiles);
         PrDescriptionRenderer.PrAnnotations ann = new PrDescriptionRenderer.PrAnnotations(
                 Map.of(),
                 generatedFiles,
@@ -41,11 +42,43 @@ public class PrAnnotationsBuilder {
                 CONVENTIONS_ENFORCED,
                 mirageReport,
                 List.of(),
-                0,
-                0,
+                counts.testFiles(),
+                counts.coveredLines(),
                 planSummary,
                 planSummary);
         return prDescriptionRenderer.render(ann);
+    }
+
+    record TestCounts(int testFiles, int coveredLines) {}
+
+    static TestCounts countTests(Map<String, String> generatedFiles) {
+        if (generatedFiles == null || generatedFiles.isEmpty()) return new TestCounts(0, 0);
+        int testFiles = 0;
+        int coveredLines = 0;
+        for (Map.Entry<String, String> entry : generatedFiles.entrySet()) {
+            String path = entry.getKey();
+            if (!isTestPath(path)) continue;
+            testFiles++;
+            String content = entry.getValue();
+            if (content == null || content.isBlank()) continue;
+            for (String rawLine : content.split("\\R")) {
+                String line = rawLine.strip();
+                if (line.isEmpty()) continue;
+                if (line.startsWith("//") || line.startsWith("*") || line.startsWith("/*")
+                        || line.startsWith("#") || line.equals("}") || line.equals("{")) continue;
+                coveredLines++;
+            }
+        }
+        return new TestCounts(testFiles, coveredLines);
+    }
+
+    private static boolean isTestPath(String path) {
+        if (path == null) return false;
+        String lower = path.toLowerCase();
+        return lower.endsWith("test.java") || lower.endsWith("it.java") || lower.endsWith("tests.java")
+                || lower.endsWith(".test.tsx") || lower.endsWith(".test.ts")
+                || lower.endsWith(".spec.tsx") || lower.endsWith(".spec.ts")
+                || lower.endsWith(".feature");
     }
 
     private MirageReviewer.Report runMirage(String projectId, Map<String, String> generatedFiles) {

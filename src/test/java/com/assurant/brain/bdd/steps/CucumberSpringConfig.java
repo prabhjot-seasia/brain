@@ -65,6 +65,7 @@ public class CucumberSpringConfig {
     @MockitoBean public CommunitySummaryNodeRepository communitySummaryNodeRepository;
     @MockitoBean public SymbolReferenceNodeRepository symbolReferenceNodeRepository;
     @MockitoBean public RuntimeServiceEdgeNodeRepository runtimeServiceEdgeNodeRepository;
+    @MockitoBean public com.assurant.brain.graph.repository.BddScenarioNodeRepository bddScenarioNodeRepository;
     @MockitoBean public CrossRepoEdgeBuilder crossRepoEdgeBuilder;
     @MockitoBean public Neo4jClient neo4jClient;
     @MockitoBean public ProjectAffinityDetector projectAffinityDetector;

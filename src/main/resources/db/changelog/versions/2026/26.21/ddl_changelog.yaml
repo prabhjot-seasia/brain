@@ -1,0 +1,179 @@
+databaseChangeLog:
+  - changeSet:
+      id: BRAIN-021.01
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: context_gap_resolutions
+      changes:
+        - createTable:
+            tableName: context_gap_resolutions
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: project_id
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: gap_signature
+                  type: varchar(512)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: gap_type
+                  type: varchar(60)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: tier
+                  type: smallint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: question
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: suggested_answer
+                  type: text
+              - column:
+                  name: suggested_choices
+                  type: jsonb
+              - column:
+                  name: answer_kind
+                  type: varchar(40)
+              - column:
+                  name: answer_value
+                  type: text
+              - column:
+                  name: answer_source
+                  type: varchar(20)
+              - column:
+                  name: confidence
+                  type: numeric(3, 2)
+              - column:
+                  name: asked_count
+                  type: int
+                  defaultValueNumeric: 0
+                  constraints:
+                    nullable: false
+              - column:
+                  name: linked_issue_key
+                  type: varchar(64)
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp with time zone
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+        - sql:
+            sql: >
+              CREATE UNIQUE INDEX uq_context_gap_resolutions_proj_sig
+                ON context_gap_resolutions (project_id, gap_signature)
+            rollback: DROP INDEX IF EXISTS uq_context_gap_resolutions_proj_sig
+        - sql:
+            sql: >
+              CREATE INDEX idx_context_gap_resolutions_pending
+                ON context_gap_resolutions (project_id, tier, status)
+                WHERE status IN ('PENDING','DEFERRED')
+            rollback: DROP INDEX IF EXISTS idx_context_gap_resolutions_pending
+
+  - changeSet:
+      id: BRAIN-021.02
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - not:
+            - tableExists:
+                tableName: test_scenarios
+      changes:
+        - createTable:
+            tableName: test_scenarios
+            columns:
+              - column:
+                  name: id
+                  type: uuid
+                  defaultValueComputed: gen_random_uuid()
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: issue_key
+                  type: varchar(64)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: scenario_id
+                  type: varchar(96)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: description
+                  type: text
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: varchar(30)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: linked_test
+                  type: text
+              - column:
+                  name: qa_notes
+                  type: text
+              - column:
+                  name: source
+                  type: varchar(20)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp with time zone
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp with time zone
+                  defaultValueComputed: now()
+                  constraints:
+                    nullable: false
+        - sql:
+            sql: >
+              CREATE UNIQUE INDEX uq_test_scenarios_issue_scenario
+                ON test_scenarios (issue_key, scenario_id)
+            rollback: DROP INDEX IF EXISTS uq_test_scenarios_issue_scenario
+        - createIndex:
+            tableName: test_scenarios
+            indexName: idx_test_scenarios_issue
+            columns:
+              - column:
+                  name: issue_key

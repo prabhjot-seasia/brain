@@ -89,9 +89,11 @@ class JiraDrivenAutodevOrchestratorTest {
         when(formatter.prLinks(any())).thenReturn(Map.of("type", "doc"));
         when(formatter.noAffinityFound(anyString())).thenReturn(Map.of("type", "doc"));
 
+        var sage = mock(com.assurant.brain.sage.SageInquisitor.class);
+        when(sage.inspect(any())).thenReturn(com.assurant.brain.sage.SageInspectionResult.empty());
         orchestrator = new JiraDrivenAutodevOrchestrator(
                 jiraClient, jiraIssueMapper, formatter, runRepo, sessionRepo,
-                projectRepo, affinityDetector, autodevFacade, asyncJobService, props, railChain);
+                projectRepo, affinityDetector, autodevFacade, asyncJobService, props, railChain, sage);
         org.springframework.test.util.ReflectionTestUtils.setField(orchestrator, "self", orchestrator);
     }
 

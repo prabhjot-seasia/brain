@@ -68,6 +68,7 @@ public class AvengerReviewer {
     private final AsyncJobService asyncJobService;
     private final MirageReviewer mirageReviewer;
     private final VectorStore vectorStore;
+    private final com.assurant.brain.sage.SageInquisitor sageInquisitor;
 
     private static final int MIRAGE_BASELINE_SAMPLES = 30;
 
@@ -120,6 +121,11 @@ public class AvengerReviewer {
             verdict = m.verdict;
             issues = m.issues;
             summary = m.summary;
+        } else if (request.avenger() == AvengerType.SAGE) {
+            SageResult s = reviewWithSage(request);
+            verdict = s.verdict;
+            issues = s.issues;
+            summary = s.summary;
         } else {
             LlmReviewResult llm = reviewWithLlm(request, sanitizedCode);
             verdict = llm.verdict;
@@ -320,9 +326,29 @@ public class AvengerReviewer {
         }
     }
 
+    private SageResult reviewWithSage(AvengerRequest request) {
+        if (request.projectId() == null || request.projectId().isBlank()) {
+            return new SageResult(AvengerVerdict.APPROVED, List.of(),
+                    "SAGE: no project context attached to this review");
+        }
+        com.assurant.brain.sage.SageInquisitor.ContextReadinessReport report =
+                sageInquisitor.readinessFor(request.projectId());
+        if (report.tier1Unresolved() > 0) {
+            List<String> issues = report.blockingGaps().stream()
+                    .map(g -> g.getGapType() + ": " + g.getQuestion())
+                    .toList();
+            return new SageResult(AvengerVerdict.BLOCKED, issues,
+                    "SAGE: " + report.tier1Unresolved() + " unresolved Tier 1 gaps must be answered before merge");
+        }
+        return new SageResult(AvengerVerdict.APPROVED, List.of(),
+                "SAGE: " + report.summary());
+    }
+
     private record StarkResult(AvengerVerdict verdict, List<String> issues, String summary) {}
 
     private record MirageResult(AvengerVerdict verdict, List<String> issues, String summary) {}
+
+    private record SageResult(AvengerVerdict verdict, List<String> issues, String summary) {}
 
     private record LlmReviewResult(AvengerVerdict verdict, List<String> issues, String summary,
                                     int tokensIn, int tokensOut) {}

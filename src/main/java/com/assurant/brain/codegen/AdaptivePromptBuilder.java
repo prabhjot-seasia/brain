@@ -53,6 +53,7 @@ public class AdaptivePromptBuilder {
     private final BrainProperties brainProperties;
     private final ReviewPatternNodeRepository reviewPatternNodeRepository;
     private final ImitationCorpusBuilder imitationCorpusBuilder;
+    private final com.assurant.brain.sage.dao.ContextGapResolutionRepository contextGapResolutionRepository;
 
     public String buildAdaptiveSection(String projectId, AvengerType avenger) {
         AvengerMemorySnapshot snapshot = avengerMemory.getMemory(avenger, projectId);
@@ -143,7 +144,39 @@ public class AdaptivePromptBuilder {
         log.info("Adaptive prompt: reinforcing {} weak conventions for project={}", weakConventions.size(), projectId);
         section.append(imitationCorpusBuilder.renderForPrompt(
                 imitationCorpusBuilder.findExamples(projectId, ImitationCorpusBuilder.TaskType.GENERIC)));
+        section.append(buildSageResolvedSection(projectId));
         return section.toString();
+    }
+
+    private String buildSageResolvedSection(String projectId) {
+        try {
+            List<com.assurant.brain.sage.domain.ContextGapResolution> resolved = contextGapResolutionRepository
+                    .findByProjectIdAndStatusOrderByCreatedAtAsc(projectId,
+                            com.assurant.brain.sage.GapStatus.RESOLVED);
+            List<com.assurant.brain.sage.domain.ContextGapResolution> autoResolved = contextGapResolutionRepository
+                    .findByProjectIdAndStatusOrderByCreatedAtAsc(projectId,
+                            com.assurant.brain.sage.GapStatus.AUTO_RESOLVED);
+            if (resolved.isEmpty() && autoResolved.isEmpty()) return "";
+            StringBuilder sb = new StringBuilder();
+            sb.append("\n\n--- RESOLVED PROJECT QUESTIONS (SAGE) ---\n");
+            int max = Math.min(20, resolved.size() + autoResolved.size());
+            int count = 0;
+            for (var g : resolved) {
+                if (count >= max) break;
+                sb.append("- ").append(g.getGapType()).append(": ").append(g.getAnswerValue()).append('\n');
+                count++;
+            }
+            for (var g : autoResolved) {
+                if (count >= max) break;
+                sb.append("- ").append(g.getGapType()).append(": ").append(g.getAnswerValue())
+                        .append(" (auto)\n");
+                count++;
+            }
+            return sb.toString();
+        } catch (RuntimeException e) {
+            log.debug("SAGE resolved-gap section unavailable for project={}: {}", projectId, e.getMessage());
+            return "";
+        }
     }
 
     public String buildImitationSection(String projectId, ImitationCorpusBuilder.TaskType taskType) {

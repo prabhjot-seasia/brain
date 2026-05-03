@@ -54,6 +54,7 @@ public class JiraDrivenAutodevOrchestrator {
     private final AsyncJobService asyncJobService;
     private final BrainProperties brainProperties;
     private final RailChain railChain;
+    private final com.assurant.brain.sage.SageInquisitor sageInquisitor;
 
     @Autowired
     @Lazy
@@ -85,6 +86,7 @@ public class JiraDrivenAutodevOrchestrator {
                 RailContext.preLlm(null, "JiraDrivenAutodevOrchestrator", rawRequirement)).sanitized();
 
         SessionPrep prep = self.prepareSession(issueKey, requirement, fresh);
+        sageInspect(prep, issueKey, requirement);
 
         if (prep.run().getAffinityProjectIds() == null || prep.run().getAffinityProjectIds().isEmpty()) {
             jiraClient.addCommentAdf(userId, issueKey, commentFormatter.noAffinityFound(labelPrefix()));
@@ -114,6 +116,22 @@ public class JiraDrivenAutodevOrchestrator {
                 "phase", "plan-posted",
                 "sessionId", planResp.sessionId(),
                 "affectedProjects", prep.run().getAffinityProjectIds()));
+    }
+
+    private void sageInspect(SessionPrep prep, String issueKey, String requirement) {
+        try {
+            String projectId = prep.run().getAffinityProjectIds() == null
+                    || prep.run().getAffinityProjectIds().isEmpty()
+                    ? null
+                    : prep.run().getAffinityProjectIds().get(0);
+            if (projectId == null) return;
+            sageInquisitor.inspect(new com.assurant.brain.sage.BrainInputEvent(
+                    com.assurant.brain.sage.BrainInputEventType.JIRA_WEBHOOK,
+                    projectId, null, requirement,
+                    java.util.List.of(), Map.of("issueKey", issueKey)));
+        } catch (RuntimeException e) {
+            log.debug("SAGE inspection skipped for issue={}: {}", issueKey, e.getMessage());
+        }
     }
 
     public record SessionPrep(JiraIssueRun run, ClarificationSession session) {}

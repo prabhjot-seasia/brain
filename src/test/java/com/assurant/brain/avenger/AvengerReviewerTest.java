@@ -81,11 +81,15 @@ class AvengerReviewerTest {
         when(adaptive.buildAdaptiveSection(any(), any(com.assurant.brain.enums.AvengerType.class))).thenReturn("");
         var testRunRepo = mock(com.assurant.brain.graph.repository.TestRunNodeRepository.class);
         when(testRunRepo.findFlakyTests(any(), anyDouble(), anyInt())).thenReturn(java.util.List.of());
+        var sage = mock(com.assurant.brain.sage.SageInquisitor.class);
+        when(sage.readinessFor(any())).thenReturn(new com.assurant.brain.sage.SageInquisitor.ContextReadinessReport(
+                0, 0, 0, 0, java.util.List.of(), "no project knowledge gaps"));
         reviewer = new AvengerReviewer(chatModel, new ObjectMapper(), personaLoader, repository, tracker,
                 props, railChain, ast, conv, learningRepo, memory, adaptive, testRunRepo,
                 mock(com.assurant.brain.jobs.AsyncJobService.class),
                 new MirageReviewer(new com.assurant.brain.codegen.StyleFingerprintBuilder()),
-                mock(org.springframework.ai.vectorstore.VectorStore.class));
+                mock(org.springframework.ai.vectorstore.VectorStore.class),
+                sage);
     }
 
     @Test

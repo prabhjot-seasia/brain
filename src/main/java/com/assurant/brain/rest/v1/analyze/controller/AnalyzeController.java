@@ -27,11 +27,25 @@ public class AnalyzeController {
 
     private final AnalysisFacade analysisFacade;
     private final AsyncJobService asyncJobService;
+    private final com.assurant.brain.sage.SageInquisitor sageInquisitor;
 
     @PostMapping(value = "/analyze", produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<AnalyzeResponse> analyze(@Valid @RequestBody AnalyzeRequest request) {
         log.info("Analyze request for project={}", request.projectId());
+        sageInspect(request);
         return ResponseEntity.ok(analysisFacade.analyze(request));
+    }
+
+    private void sageInspect(AnalyzeRequest request) {
+        try {
+            if (request.projectId() == null || request.projectId().isBlank()) return;
+            sageInquisitor.inspect(new com.assurant.brain.sage.BrainInputEvent(
+                    com.assurant.brain.sage.BrainInputEventType.REQUIREMENT_ANALYSIS,
+                    request.projectId(), null, request.requirement(),
+                    java.util.List.of(), java.util.Map.of()));
+        } catch (RuntimeException e) {
+            log.debug("SAGE inspection skipped for analyze: {}", e.getMessage());
+        }
     }
 
     @PostMapping(value = "/analyze/start", produces = MediaType.APPLICATION_JSON_VALUE)

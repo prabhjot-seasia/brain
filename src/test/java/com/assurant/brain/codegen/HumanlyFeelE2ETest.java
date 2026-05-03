@@ -26,7 +26,7 @@ class HumanlyFeelE2ETest {
     void mirageInRoster() {
         boolean present = Arrays.stream(AvengerType.values()).anyMatch(t -> t == AvengerType.MIRAGE);
         assertThat(present).as("MIRAGE must be a first-class Avenger").isTrue();
-        assertThat(AvengerType.values()).hasSize(12);
+        assertThat(AvengerType.values()).hasSize(13);
     }
 
     @Test

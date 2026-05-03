@@ -12,5 +12,6 @@ public enum AvengerDomain {
     LEARNING,
     PERFORMANCE,
     OVERSIGHT,
-    STYLE_FIT
+    STYLE_FIT,
+    PROJECT_KNOWLEDGE
 }

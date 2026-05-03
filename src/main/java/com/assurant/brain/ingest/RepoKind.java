@@ -6,5 +6,6 @@ public enum RepoKind {
     CROSS_CUTTING_INFRA,
     CLIENT_LIBRARY,
     SCRIPTS,
+    AUTOMATION_TESTS,
     UNKNOWN
 }

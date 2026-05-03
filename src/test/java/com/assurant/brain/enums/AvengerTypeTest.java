@@ -11,19 +11,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 class AvengerTypeTest {
 
     @Test
-    @DisplayName("has exactly 12 Avengers")
-    void hasTwelveAvengers() {
-        assertThat(AvengerType.values()).hasSize(12);
+    @DisplayName("has exactly 13 Avengers (SAGE joined 2026-05-03)")
+    void hasThirteenAvengers() {
+        assertThat(AvengerType.values()).hasSize(13);
     }
 
     @Test
-    @DisplayName("role distribution: 6 workers, 4 service, 2 support")
+    @DisplayName("role distribution: 6 workers, 5 service, 2 support")
     void roleDistribution() {
         long workers = Arrays.stream(AvengerType.values()).filter(t -> t.role() == AvengerRole.WORKER).count();
         long service = Arrays.stream(AvengerType.values()).filter(t -> t.role() == AvengerRole.SERVICE).count();
         long support = Arrays.stream(AvengerType.values()).filter(t -> t.role() == AvengerRole.SUPPORT).count();
         assertThat(workers).isEqualTo(6);
-        assertThat(service).isEqualTo(4);
+        assertThat(service).isEqualTo(5);
         assertThat(support).isEqualTo(2);
     }
 
@@ -31,7 +31,7 @@ class AvengerTypeTest {
     @DisplayName("every Avenger has a distinct domain")
     void distinctDomains() {
         long distinct = Arrays.stream(AvengerType.values()).map(AvengerType::domain).distinct().count();
-        assertThat(distinct).isEqualTo(12);
+        assertThat(distinct).isEqualTo(13);
     }
 
     @Test
