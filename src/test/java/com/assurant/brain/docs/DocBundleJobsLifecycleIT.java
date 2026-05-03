@@ -38,7 +38,7 @@ class DocBundleJobsLifecycleIT extends BrainApplicationTests {
     void fullStartReturnsJobAndStream() throws Exception {
         UUID docId = UUID.randomUUID();
         UUID jobId = UUID.randomUUID();
-        when(fullDocBundleService.startGeneration(eq("doc-h3")))
+        when(fullDocBundleService.startGeneration(eq("doc-h3"), eq(false)))
                 .thenReturn(new FullDocBundleService.GenerateResult(
                         docId, DocGenerationStatus.GENERATING, false, null, jobId, false));
 
@@ -48,7 +48,7 @@ class DocBundleJobsLifecycleIT extends BrainApplicationTests {
                 .andExpect(jsonPath("$.jobId").value(jobId.toString()))
                 .andExpect(jsonPath("$.streamUrl").value("/api/v1/jobs/stream/" + jobId));
 
-        verify(fullDocBundleService).startGeneration("doc-h3");
+        verify(fullDocBundleService).startGeneration("doc-h3", false);
     }
 
     @Test

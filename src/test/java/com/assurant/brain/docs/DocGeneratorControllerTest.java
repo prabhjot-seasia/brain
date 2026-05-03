@@ -173,7 +173,7 @@ class DocGeneratorControllerTest {
     @DisplayName("generateFull returns 202 with documentId when fresh")
     void generateFullFresh() {
         UUID id = UUID.randomUUID();
-        when(fullDocBundleService.startGeneration("proj-1"))
+        when(fullDocBundleService.startGeneration("proj-1", false))
                 .thenReturn(new FullDocBundleService.GenerateResult(id, DocGenerationStatus.GENERATING, false, null));
         var resp = controller.generateFull("proj-1", false);
         assertThat(resp.getStatusCode().value()).isEqualTo(202);
@@ -186,7 +186,7 @@ class DocGeneratorControllerTest {
     @DisplayName("generateFull returns 200 with fromCache:true on cache hit")
     void generateFullCacheHit() {
         UUID id = UUID.randomUUID();
-        when(fullDocBundleService.startGeneration("proj-1"))
+        when(fullDocBundleService.startGeneration("proj-1", false))
                 .thenReturn(new FullDocBundleService.GenerateResult(id, DocGenerationStatus.COMPLETED, true,
                         java.time.OffsetDateTime.now()));
         var resp = controller.generateFull("proj-1", false);

@@ -62,6 +62,9 @@ public abstract class BrainApplicationTests {
     @MockitoBean
     public com.assurant.brain.graph.repository.BddScenarioNodeRepository bddScenarioNodeRepository;
 
+    @MockitoBean
+    public com.assurant.brain.graph.repository.EndpointSummaryRepository endpointSummaryRepository;
+
     @Autowired
     public MockMvc mvc;
 

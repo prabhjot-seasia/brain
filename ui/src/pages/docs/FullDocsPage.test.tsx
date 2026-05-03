@@ -39,7 +39,7 @@ describe('FullDocsPage', () => {
   it('renders project picker + Generate button + empty history copy', async () => {
     renderPage()
     await waitFor(() => expect(screen.getByLabelText(/Project/i)).toBeInTheDocument())
-    expect(screen.getByRole('button', { name: /Generate Full Documentation PDF/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^Generate$/i })).toBeInTheDocument()
     expect(screen.getByText(/No documentation yet\./i)).toBeInTheDocument()
   })
 
@@ -53,13 +53,14 @@ describe('FullDocsPage', () => {
 
     renderPage()
     await waitFor(() => expect(screen.getByLabelText(/Project/i)).toBeInTheDocument())
-    await userEvent.click(screen.getByRole('button', { name: /Generate Full Documentation PDF/i }))
+    await userEvent.click(screen.getByRole('button', { name: /^Generate$/i }))
 
     await waitFor(() => {
-      expect(screen.getByText(/ARCHITECTURE: OK/)).toBeInTheDocument()
-      expect(screen.getByRole('button', { name: /Download PDF/i })).toBeInTheDocument()
+      expect(screen.getAllByText(/ARCHITECTURE/).length).toBeGreaterThan(0)
+      expect(screen.getAllByText(/^OK$/).length).toBeGreaterThan(0)
+      expect(screen.getByRole('button', { name: /Download Full PDF/i })).toBeInTheDocument()
     })
-    expect(mockGenerate).toHaveBeenCalledWith('ce-app')
+    expect(mockGenerate).toHaveBeenCalledWith('ce-app', false)
   })
 
   it('PARTIAL status shows Retry button + warning alert', async () => {
@@ -72,7 +73,7 @@ describe('FullDocsPage', () => {
 
     renderPage()
     await waitFor(() => expect(screen.getByLabelText(/Project/i)).toBeInTheDocument())
-    await userEvent.click(screen.getByRole('button', { name: /Generate Full Documentation PDF/i }))
+    await userEvent.click(screen.getByRole('button', { name: /^Generate$/i }))
 
     await waitFor(() => {
       expect(screen.getByText(/1 of 5 sections failed/)).toBeInTheDocument()
@@ -92,7 +93,7 @@ describe('FullDocsPage', () => {
 
     renderPage()
     await waitFor(() => expect(screen.getByLabelText(/Project/i)).toBeInTheDocument())
-    await userEvent.click(screen.getByRole('button', { name: /Generate Full Documentation PDF/i }))
+    await userEvent.click(screen.getByRole('button', { name: /^Generate$/i }))
 
     await waitFor(() => {
       expect(screen.getByText(/From cache/i)).toBeInTheDocument()
@@ -109,7 +110,7 @@ describe('FullDocsPage', () => {
 
     renderPage()
     await waitFor(() => expect(screen.getByLabelText(/Project/i)).toBeInTheDocument())
-    await userEvent.click(screen.getByRole('button', { name: /Generate Full Documentation PDF/i }))
+    await userEvent.click(screen.getByRole('button', { name: /^Generate$/i }))
 
     await waitFor(() => {
       expect(screen.getByText(/LLM unreachable/)).toBeInTheDocument()
