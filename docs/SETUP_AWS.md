@@ -48,6 +48,32 @@ pip install -r requirements.txt
 
 ---
 
+## 0a. Where every secret comes from
+
+Project Brain reads its config from `gl-dls-ce-config-files/project-brain.yml` (Spring Cloud Config). Every `${VAR}` placeholder in that file is one of: an AWS Secrets Manager value, a console-issued credential, or a third-party PAT. Provision them in this order before the first deploy. The `target` column is the Spring Cloud Config env-var name the ECS task expects; the `source` column is exactly where to acquire it from.
+
+| Env var | Source | Acquire it like this |
+|---|---|---|
+| `SPRING_DATASOURCE_PASSWORD` | AWS Secrets Manager — `dev-brain/rds/master` (auto-created by `CDK-DEV-BRAIN-DATA` for env-managed RDS, or by your platform team for shared RDS) | `aws secretsmanager get-secret-value --secret-id dev-brain/rds/master --query SecretString --output text \| jq -r .password`. Wire to the ECS task as a `secret:` reference in `ecs_stack.py`, never a plaintext env var. |
+| `SPRING_NEO4J_PASSWORD` | AWS Secrets Manager — `dev-brain/neo4j/master` (auto-created by `CDK-DEV-BRAIN-NEO4J` user-data on first boot) | `aws secretsmanager get-secret-value --secret-id dev-brain/neo4j/master --query SecretString --output text \| jq -r .password`. The Neo4j stack writes this in `init.sh`; do not rotate manually without also restarting the ECS task. |
+| `BRAIN_JWT_SECRET` | AWS Secrets Manager — `dev-brain/app/jwt-secret` (create once per env) | `openssl rand -base64 48 \| tr -d '\n'` then `aws secretsmanager create-secret --name dev-brain/app/jwt-secret --secret-string <value>`. Must be ≥ 32 chars or `JwtTokenProvider` refuses to start. |
+| `BRAIN_GITHUB_TOKEN` | GitHub PAT (classic) | github.com → Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token. Scopes: `repo` (read + write), `workflow` (so PR-creation flows can update workflow files when needed). Store as `dev-brain/app/github-pat` in Secrets Manager. |
+| `BRAIN_GITHUB_WEBHOOK_SECRET` | GitHub repo settings — Webhooks → Add webhook | `openssl rand -hex 32` → paste into the GitHub webhook config AND store the same value in Secrets Manager as `dev-brain/app/github-webhook-secret`. The webhook posts to `https://${ALB}/project-brain-backend/api/v1/webhooks/github`. HMAC-verified; without this set, webhooks are rejected outright. |
+| `BRAIN_JIRA_BASE_URL` | Your Atlassian Cloud site URL | e.g. `https://yourorg.atlassian.net`. Plain config value, not a secret — but keep it in Secrets Manager (`dev-brain/app/jira-config`) alongside the rest of the Jira block for symmetry. |
+| `BRAIN_JIRA_EMAIL` | Atlassian account that owns the API token | The email of a service-account Atlassian user (preferred) or the operator. This account's permissions in Jira determine what Project Brain can read/create. |
+| `BRAIN_JIRA_API_TOKEN` | Atlassian Cloud API token | id.atlassian.com → Manage profile → Security → API tokens → Create API token. Copy once — Atlassian will not show it again. Store as `dev-brain/app/jira-api-token` in Secrets Manager. |
+| `BRAIN_JIRA_WEBHOOK_SECRET` | Self-issued | `openssl rand -hex 32` → store in Secrets Manager (`dev-brain/app/jira-webhook-secret`) AND configure on the Atlassian webhook (Settings → System → WebHooks → set as `?token=` query string or `X-Brain-Webhook-Token` header). Webhook deliveries are constant-time compared against this; without it, deliveries are rejected. |
+| `BRAIN_CONFLUENCE_API_TOKEN` | Atlassian Cloud API token (same flow as Jira) | Same id.atlassian.com → API tokens. The same token works for Confluence and Jira if the account has access to both — but issuing separate tokens per integration is the cleaner audit trail. Store as `dev-brain/app/confluence-api-token`. |
+| `BRAIN_RULEPACK_APPROVAL_TOKEN` | Self-issued | `openssl rand -hex 32` → store in Secrets Manager (`dev-brain/app/rulepack-approval-token`). Required by `RulePackController` to gate convention-rulepack updates. Leave unset to disable rulepack approvals entirely. |
+| `BRAIN_HAWKEYE_AWS_ACCOUNT_ID` | Your AWS account ID | `aws sts get-caller-identity --query Account --output text`. Plain config, not a secret — but pin it explicitly so HAWKEYE's emitted ASFF findings carry the right `AwsAccountId`. |
+| `BRAIN_SANDBOX_DOCKER_IMAGE` | Your ECR repo | The full image URI of the sandbox runtime, e.g. `${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/project-brain-sandbox:latest`. Build via `docker/sandbox/Dockerfile`, push alongside the main app image. Leave unset to disable Docker-isolated sandbox validation (falls back to host-process validation). |
+
+> **Rotation:** for every secret in Secrets Manager, set a rotation cadence (90 days for app secrets, follow your platform team's policy for RDS/Neo4j). After rotation, run `aws ecs update-service --force-new-deployment` so the task picks up the new value — Spring does not poll Secrets Manager.
+
+> **What about CDK-managed secrets?** `CDK-DEV-BRAIN-NEO4J` creates the Neo4j password automatically on stack deploy; `CDK-DEV-BRAIN-ECS` reads it via `secretsmanager.Secret.from_secret_name_v2(...)` and wires it to the task as a `secret:` (not `environment:`). The same pattern applies to anything you create yourself — write it to Secrets Manager, then reference it in the ECS task definition by ARN, never by plaintext.
+
+---
+
 ## 1. Bootstrap CDK (one time per account/region)
 
 ```bash

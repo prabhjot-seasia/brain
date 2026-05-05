@@ -79,8 +79,7 @@ public class JiraDrivenAutodevOrchestrator {
     }
 
     public void beginAnalysis(String issueKey, UUID jobId, boolean fresh) {
-        String userId = connectedUserId();
-        Map<String, Object> issue = jiraClient.getIssueWithComments(userId, issueKey);
+        Map<String, Object> issue = jiraClient.getIssueWithComments(issueKey);
         String rawRequirement = buildRequirementText(issue);
         String requirement = railChain.applyPreLlm(
                 RailContext.preLlm(null, "JiraDrivenAutodevOrchestrator", rawRequirement)).sanitized();
@@ -89,7 +88,7 @@ public class JiraDrivenAutodevOrchestrator {
         sageInspect(prep, issueKey, requirement);
 
         if (prep.run().getAffinityProjectIds() == null || prep.run().getAffinityProjectIds().isEmpty()) {
-            jiraClient.addCommentAdf(userId, issueKey, commentFormatter.noAffinityFound(labelPrefix()));
+            jiraClient.addCommentAdf(issueKey, commentFormatter.noAffinityFound(labelPrefix()));
             transitionToAnalysis(issueKey, prep.run());
             asyncJobService.markPartial(jobId, Map.of("phase", "no-affinity"));
             return;
@@ -100,7 +99,7 @@ public class JiraDrivenAutodevOrchestrator {
                 : autodevFacade.clarify(prep.session().getId().toString(), requirement);
 
         if (!sessionResp.planReady()) {
-            jiraClient.addCommentAdf(userId, issueKey,
+            jiraClient.addCommentAdf(issueKey,
                     commentFormatter.questions(sessionResp.clarificationQuestions(), labelPrefix()));
             transitionToAnalysis(issueKey, prep.run());
             asyncJobService.markPartial(jobId, Map.of("phase", "questions-posted",
@@ -109,7 +108,7 @@ public class JiraDrivenAutodevOrchestrator {
         }
 
         AutodevPlanResponse planResp = autodevFacade.plan(sessionResp.sessionId());
-        jiraClient.addCommentAdf(userId, issueKey,
+        jiraClient.addCommentAdf(issueKey,
                 commentFormatter.planSummary(requirement, prep.run().getAffinityProjectIds(), labelPrefix()));
         transitionToAnalysisDone(issueKey, prep.run());
         asyncJobService.markSucceeded(jobId, Map.of(
@@ -172,7 +171,6 @@ public class JiraDrivenAutodevOrchestrator {
     }
 
     public void implementAndCreatePrs(String issueKey, UUID jobId) {
-        String userId = connectedUserId();
         JiraIssueRun run = runRepository.findByIssueKey(issueKey)
                 .orElseThrow(() -> new IllegalStateException("No prior analysis for " + issueKey));
         if (run.getState() != JiraRunState.AI_DEV_ANALYSIS_DONE) {
@@ -186,7 +184,7 @@ public class JiraDrivenAutodevOrchestrator {
 
         List<AutodevCreatePrsRequest.RepoSpec> repos = buildRepoSpecs(run.getAffinityProjectIds());
         if (repos.isEmpty()) {
-            jiraClient.addCommentAdf(userId, issueKey, commentFormatter.noAffinityFound(labelPrefix()));
+            jiraClient.addCommentAdf(issueKey, commentFormatter.noAffinityFound(labelPrefix()));
             transitionToAnalysis(issueKey, run);
             asyncJobService.markPartial(jobId, Map.of("phase", "no-repos"));
             return;
@@ -195,7 +193,7 @@ public class JiraDrivenAutodevOrchestrator {
         MultiRepoPrResult batch = autodevFacade.createPrs(run.getSessionId().toString(), repos, issueKey);
         run.setPrBatchId(batch.batchId());
 
-        jiraClient.addCommentAdf(userId, issueKey, commentFormatter.prLinks(batch));
+        jiraClient.addCommentAdf(issueKey, commentFormatter.prLinks(batch));
         transitionToReviewReady(issueKey, run);
         asyncJobService.markSucceeded(jobId, Map.of(
                 "phase", "prs-created",
@@ -311,7 +309,7 @@ public class JiraDrivenAutodevOrchestrator {
 
     private void applyLabels(String issueKey, String addLabel, List<String> removeLabels) {
         try {
-            jiraClient.transitionLabels(connectedUserId(), issueKey, List.of(addLabel), removeLabels);
+            jiraClient.transitionLabels(issueKey, List.of(addLabel), removeLabels);
         } catch (RuntimeException e) {
             log.warn("Failed to transition labels on {}: {}", issueKey, e.getMessage());
         }
@@ -319,7 +317,7 @@ public class JiraDrivenAutodevOrchestrator {
 
     private void tryPostFailureComment(String issueKey, Throwable t) {
         try {
-            jiraClient.addCommentAdf(connectedUserId(), issueKey, commentFormatter.failure(t));
+            jiraClient.addCommentAdf(issueKey, commentFormatter.failure(t));
         } catch (RuntimeException ignored) {
             // best effort
         }
@@ -333,15 +331,5 @@ public class JiraDrivenAutodevOrchestrator {
         BrainProperties.Jira jira = brainProperties.jira();
         String pref = jira == null ? null : jira.labelPrefix();
         return pref == null || pref.isBlank() ? "AI_DEV_" : pref;
-    }
-
-    private String connectedUserId() {
-        BrainProperties.Jira jira = brainProperties.jira();
-        String userId = jira == null ? null : jira.connectedUserId();
-        if (userId == null || userId.isBlank()) {
-            throw new IllegalStateException(
-                    "brain.jira.connected-user-id is not configured — cannot make outbound Jira calls");
-        }
-        return userId;
     }
 }

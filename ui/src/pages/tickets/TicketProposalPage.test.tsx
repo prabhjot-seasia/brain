@@ -5,7 +5,7 @@ import TicketProposalPage from './TicketProposalPage'
 
 const mockProposeTickets = vi.fn()
 const mockCreateTickets = vi.fn()
-const mockGetJiraStatus = vi.fn()
+const mockGetJiraConfig = vi.fn()
 const mockGetProposalStatus = vi.fn()
 const mockUseJobStream = vi.fn()
 const mockStartWatching = vi.fn()
@@ -15,7 +15,7 @@ vi.mock('../../api/brainClient', () => ({
     proposeTickets: (...args: unknown[]) => mockProposeTickets(...args),
     createTickets: (...args: unknown[]) => mockCreateTickets(...args),
     getProposalStatus: (...args: unknown[]) => mockGetProposalStatus(...args),
-    getJiraStatus: (...args: unknown[]) => mockGetJiraStatus(...args),
+    getJiraConfig: (...args: unknown[]) => mockGetJiraConfig(...args),
   },
 }))
 
@@ -47,7 +47,7 @@ const sampleTicket = {
 describe('TicketProposalPage', () => {
   beforeEach(() => {
     vi.clearAllMocks()
-    mockGetJiraStatus.mockResolvedValue({ connected: true, siteUrl: 'https://test.atlassian.net' })
+    mockGetJiraConfig.mockResolvedValue({ configured: true, baseUrl: 'https://test.atlassian.net' })
     mockUseJobStream.mockReturnValue({ snapshot: null, status: 'idle' })
   })
 

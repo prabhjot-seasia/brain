@@ -30,7 +30,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @TestPropertySource(properties = {
         "brain.jira.webhook-secret=test-secret",
         "brain.jira.label-prefix=AI_DEV_",
-        "brain.jira.connected-user-id=bot"
+        "brain.jira.base-url=https://example.atlassian.net",
+        "brain.jira.email=bot@example.com",
+        "brain.jira.api-token=test-token"
 })
 class JiraWebhookControllerIT extends BrainApplicationTests {
 

@@ -1,0 +1,12 @@
+databaseChangeLog:
+  - changeSet:
+      id: BRAIN-023.01
+      author: brain
+      preConditions:
+        - onFail: MARK_RAN
+        - tableExists:
+            tableName: user_sessions
+      changes:
+        - dropTable:
+            tableName: user_sessions
+            cascadeConstraints: true

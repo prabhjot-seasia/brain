@@ -70,8 +70,11 @@ If `enforce-project-membership` is `false` or missing in prod config, **stop**. 
 # In the deploy environment (NOT in this repo):
 echo "$BRAIN_JWT_SECRET" | wc -c              # expect: > 32 chars
 echo "$BRAIN_GITHUB_WEBHOOK_SECRET" | wc -c   # expect: > 32 chars
-echo "$BRAIN_TOKEN_ENCRYPTION_KEY" | wc -c    # expect: 32 (AES-256 key)
-echo "$BRAIN_GITHUB_TOKEN" | wc -c            # expect: ~ 40 (PAT)
+echo "$BRAIN_GITHUB_TOKEN" | wc -c            # expect: ~ 40 (GitHub PAT)
+echo "$BRAIN_JIRA_BASE_URL" | wc -c           # expect: > 0 (Jira site URL)
+echo "$BRAIN_JIRA_EMAIL" | wc -c              # expect: > 0 (account email)
+echo "$BRAIN_JIRA_API_TOKEN" | wc -c          # expect: > 24 (Atlassian API token)
+echo "$BRAIN_JIRA_WEBHOOK_SECRET" | wc -c     # expect: > 32 chars
 ```
 
 Empty or "not-configured" values mean security is degraded. Do not deploy.

@@ -88,7 +88,6 @@ public class CucumberSpringConfig {
             "generated_documents",
             "solution_patterns",
             "token_usage_records",
-            "user_sessions",
             "clarification_sessions",
             "chunks",
             "projects"

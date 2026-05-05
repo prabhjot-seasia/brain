@@ -50,10 +50,10 @@ public class JiraWebhookController {
             log.warn("Jira webhook rejected: missing or invalid token");
             return ResponseEntity.status(401).body(Map.of("error", "invalid token"));
         }
-        if (connectedUserId() == null) {
-            log.error("Jira webhook received but brain.jira.connected-user-id is not configured");
+        if (!isJiraPatConfigured()) {
+            log.error("Jira webhook received but brain.jira PAT is not configured");
             return ResponseEntity.status(503).body(Map.of(
-                    "error", "Jira integration not configured (brain.jira.connected-user-id)"));
+                    "error", "Jira integration not configured (brain.jira.base-url / email / api-token)"));
         }
 
         Map<String, Object> body;
@@ -113,10 +113,14 @@ public class JiraWebhookController {
         return java.security.MessageDigest.isEqual(a, b);
     }
 
-    private String connectedUserId() {
+    private boolean isJiraPatConfigured() {
         BrainProperties.Jira jira = brainProperties.jira();
-        String userId = jira == null ? null : jira.connectedUserId();
-        return userId == null || userId.isBlank() ? null : userId;
+        if (jira == null) return false;
+        return notBlank(jira.baseUrl()) && notBlank(jira.email()) && notBlank(jira.apiToken());
+    }
+
+    private static boolean notBlank(String s) {
+        return s != null && !s.isBlank();
     }
 
     @SuppressWarnings("unchecked")

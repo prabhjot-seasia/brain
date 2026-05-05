@@ -123,7 +123,7 @@ class JiraTicketControllerTest {
         assertThat(response.getStatusCode().value()).isEqualTo(202);
         assertThat(response.getBody()).containsKey("jobId");
         assertThat(response.getBody()).containsKey("streamUrl");
-        verify(ticketCreationService).createTicketsAsync(eq("anonymous"), eq("PROJ"), anyList(), any(UUID.class));
+        verify(ticketCreationService).createTicketsAsync(eq("PROJ"), anyList(), any(UUID.class));
     }
 
     @Test

@@ -1,70 +1,52 @@
 package com.assurant.brain.jira;
 
-import com.assurant.brain.auth.JiraTokenStore;
-import com.assurant.brain.dao.UserSessionRepository;
-import com.assurant.brain.domain.UserSession;
-import org.junit.jupiter.api.BeforeEach;
+import com.assurant.brain.config.properties.BrainProperties;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
-
-import java.time.OffsetDateTime;
-import java.util.Optional;
+import org.springframework.web.client.RestClient;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.when;
 
-@DisplayName("JiraClient")
+@DisplayName("JiraClient — PAT auth")
 class JiraClientTest {
 
-    private UserSessionRepository userSessionRepository;
-    private JiraTokenStore tokenStore;
-    private JiraClient client;
-
-    @BeforeEach
-    void setup() {
-        userSessionRepository = mock(UserSessionRepository.class);
-        tokenStore = mock(JiraTokenStore.class);
-        var restClientBuilder = org.springframework.web.client.RestClient.builder();
-        client = new JiraClient(userSessionRepository, tokenStore, restClientBuilder);
+    private JiraClient buildClient(BrainProperties.Jira jira) {
+        BrainProperties props = new BrainProperties(null, null, null, null, null, jira,
+                null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        return new JiraClient(props, RestClient.builder());
     }
 
     @Test
-    @DisplayName("throws when user has no Jira session")
-    void throwsWhenNoSession() {
-        when(userSessionRepository.findByUserId("user-1")).thenReturn(Optional.empty());
+    @DisplayName("throws when base-url is missing")
+    void throwsWhenBaseUrlMissing() {
+        JiraClient client = buildClient(new BrainProperties.Jira(
+                "", "user@example.com", "token", "secret", "AI_DEV_"));
 
-        assertThatThrownBy(() -> client.getIssue("user-1", "PROJ-1"))
+        assertThatThrownBy(() -> client.getIssue("PROJ-1"))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("No Jira session found");
+                .hasMessageContaining("base-url");
     }
 
     @Test
-    @DisplayName("throws when Jira session is expired")
-    void throwsWhenExpired() {
-        UserSession session = new UserSession();
-        session.setUserId("user-1");
-        session.setJiraAccessTokenEnc(null);
-        session.setExpiresAt(OffsetDateTime.now().minusHours(1));
-        when(userSessionRepository.findByUserId("user-1")).thenReturn(Optional.of(session));
+    @DisplayName("throws when email or api-token is missing")
+    void throwsWhenCredentialsMissing() {
+        JiraClient client = buildClient(new BrainProperties.Jira(
+                "https://example.atlassian.net", "", "", "secret", "AI_DEV_"));
 
-        assertThatThrownBy(() -> client.getIssue("user-1", "PROJ-1"))
+        assertThatThrownBy(() -> client.getIssue("PROJ-1"))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessageContaining("expired");
+                .hasMessageContaining("email");
     }
 
     @Test
-    @DisplayName("throws when no cloud ID found for resolveCloudId")
-    void throwsWhenNoCloudId() {
-        UserSession session = new UserSession();
-        session.setUserId("user-1");
-        session.setJiraAccessTokenEnc("encrypted-token");
-        session.setExpiresAt(OffsetDateTime.now().plusHours(1));
-        session.setJiraCloudId(null);
-        when(userSessionRepository.findByUserId("user-1")).thenReturn(Optional.of(session));
-        when(tokenStore.decrypt("encrypted-token")).thenReturn("real-token");
+    @DisplayName("throws when jira config record is missing")
+    void throwsWhenJiraNull() {
+        BrainProperties props = new BrainProperties(null, null, null, null, null, null,
+                null, null, null, null, null, null, null, null, null, null, null, null, null, null);
+        JiraClient client = new JiraClient(props, RestClient.builder());
 
-        assertThatThrownBy(() -> client.searchIssues("user-1", "project = PROJ", 10))
-                .isInstanceOf(Exception.class);
+        assertThatThrownBy(() -> client.getIssue("PROJ-1"))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessageContaining("brain.jira");
     }
 }

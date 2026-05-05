@@ -80,17 +80,11 @@ export const brainApi = {
   getIngestionStatus: (projectId: string) =>
     client.get<IngestionStatusResponse>(`/projects/${projectId}/status`).then(r => r.data),
 
-  getJiraStatus: (userId?: string) =>
-    client.get<{ connected: boolean; siteUrl?: string }>('/auth/jira/status', { params: { userId } }).then(r => r.data),
+  getJiraConfig: () =>
+    client.get<{ configured: boolean; baseUrl: string }>('/jira/config').then(r => r.data),
 
-  getJiraConnectUrl: () =>
-    client.get<{ authUrl: string; state: string }>('/auth/jira/connect').then(r => r.data),
-
-  jiraCallback: (code: string, userId?: string) =>
-    client.post<{ connected: boolean; siteUrl: string }>('/auth/jira/callback', { code, userId }).then(r => r.data),
-
-  fetchJiraTicket: (issueKey: string, userId?: string) =>
-    client.post<IntakeResponse>('/intake/jira', { issueKey, userId }).then(r => r.data),
+  fetchJiraTicket: (issueKey: string) =>
+    client.post<IntakeResponse>('/intake/jira', { issueKey }).then(r => r.data),
 
   uploadDocument: (file: File, userId?: string) => {
     const form = new FormData()

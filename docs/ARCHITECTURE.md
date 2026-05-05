@@ -159,9 +159,6 @@ POST /api/v1/analyze (JSON: projectId, requirement, sessionId?, answers?)
 ```
 src/main/java/com/assurant/brain/
 ├── BrainApplication.java           # Spring Boot entry point
-├── auth/
-│   ├── JiraOAuthController.java   # GET /api/v1/auth/jira/connect|callback|status
-│   └── JiraTokenStore.java        # AES-encrypted token persistence
 ├── ci/
 │   ├── CiFailureParser.java       # Parses GitHub Actions log output for errors
 │   ├── CiRemediationService.java  # Pushes LLM-generated fixes on CI failure (max N attempts)
@@ -182,8 +179,7 @@ src/main/java/com/assurant/brain/
 │   ├── IntakeRecordRepository.java
 │   ├── ProjectRepository.java
 │   ├── PullRequestRecordRepository.java
-│   ├── TicketProposalRepository.java
-│   └── UserSessionRepository.java
+│   └── TicketProposalRepository.java
 ├── docs/
 │   ├── DocGeneratorController.java  # POST|GET|DELETE /api/v1/docs
 │   └── DocGeneratorService.java   # RAG-backed markdown document generation

@@ -99,13 +99,17 @@ In AWS ECS, these come from the task role (no static keys needed).
 
 Generate a PAT at [github.com/settings/tokens](https://github.com/settings/tokens) with `repo` scope.
 
-### Jira OAuth (Ticket Creation)
+### Jira PAT (Ticket Creation)
+
+A single service-account Atlassian Cloud API token authenticates every outbound Jira call (read, create, comment, label). Generate the token at [id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens). Sent as HTTP Basic with the email + token.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `BRAIN_JIRA_OAUTH_CLIENT_ID` | (empty) | OAuth 2.0 client ID from [developer.atlassian.com](https://developer.atlassian.com/console/myapps/). Required to connect Jira. |
-| `BRAIN_JIRA_OAUTH_CLIENT_SECRET` | (empty) | OAuth 2.0 client secret. Keep in Secrets Manager — never commit. |
-| `BRAIN_JIRA_OAUTH_REDIRECT_URI` | `http://localhost:3000/auth/jira/callback` | Where Atlassian redirects after OAuth approval. Must match the callback URL registered in your Atlassian app. |
+| `BRAIN_JIRA_BASE_URL` | (empty) | Your Jira Cloud site URL, e.g. `https://yourorg.atlassian.net`. No trailing slash required. |
+| `BRAIN_JIRA_EMAIL` | (empty) | Atlassian account email that owns the API token. |
+| `BRAIN_JIRA_API_TOKEN` | (empty) | Atlassian Cloud API token. Keep in Secrets Manager — never commit. |
+| `BRAIN_JIRA_WEBHOOK_SECRET` | (empty) | Shared secret validated against the `X-Brain-Webhook-Token` header (or `?token=` query param) on every inbound Jira webhook. Required for `/api/v1/webhooks/jira` to accept events. |
+| `BRAIN_JIRA_LABEL_PREFIX` | `AI_DEV_` | Prefix for the labels the orchestrator drives the Jira state machine with (`AI_DEV_READY`, `AI_DEV_ANALYSIS`, `AI_DEV_REVIEW_READY`). |
 
 ### Redis Semantic Cache
 

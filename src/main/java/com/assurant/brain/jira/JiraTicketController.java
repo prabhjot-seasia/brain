@@ -89,7 +89,6 @@ public class JiraTicketController {
     @PostMapping("/create")
     public ResponseEntity<Map<String, Object>> create(@RequestBody Map<String, Object> body) {
         String proposalId = (String) body.get("proposalId");
-        String userId = com.assurant.brain.security.SecurityUtils.currentUserId();
 
         @SuppressWarnings("unchecked")
         List<Map<String, Object>> ticketMaps = (List<Map<String, Object>>) body.get("tickets");
@@ -118,7 +117,7 @@ public class JiraTicketController {
         AsyncJob job = asyncJobService.startOrAttach(
                 "TICKET_CREATION", "PROPOSAL", dedupTarget, null);
         if (!job.attachedToExisting()) {
-            ticketCreationService.createTicketsAsync(userId, projectKey, tickets, job.id());
+            ticketCreationService.createTicketsAsync(projectKey, tickets, job.id());
             if (proposal != null) {
                 proposal.setStatus(com.assurant.brain.enums.TicketProposalStatus.CREATED.name());
                 ticketProposalRepository.save(proposal);

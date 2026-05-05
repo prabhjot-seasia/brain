@@ -918,52 +918,26 @@ GET /api/v1/jira/tickets?userId=default
 
 ---
 
-## Jira OAuth
+## Jira Configuration
 
-### Start the OAuth Flow
+Jira auth is a single service-account Atlassian Cloud API token (HTTP Basic). Configure it via env vars — there is no per-user OAuth flow:
+
+- `BRAIN_JIRA_BASE_URL` — e.g. `https://yourorg.atlassian.net`
+- `BRAIN_JIRA_EMAIL` — Atlassian account email that owns the token
+- `BRAIN_JIRA_API_TOKEN` — Atlassian Cloud API token
+
+### Get Jira Configuration
 
 ```
-GET /api/v1/auth/jira/connect
+GET /api/v1/jira/config
 ```
+
+Returns whether the PAT is configured plus the base URL, used by the UI to render clickable issue links.
 
 **Response (200):**
 
 ```json
-{
-  "authUrl": "https://auth.atlassian.com/authorize?audience=api.atlassian.com&client_id=...",
-  "state": "random-uuid"
-}
-```
-
-Redirect the user to `authUrl`. After they approve, Atlassian sends a `code` to your `BRAIN_JIRA_OAUTH_REDIRECT_URI`.
-
-### Complete the OAuth Flow
-
-```
-POST /api/v1/auth/jira/callback
-Content-Type: application/json
-
-{ "code": "auth-code-from-atlassian", "userId": "default" }
-```
-
-Exchanges the code for access + refresh tokens, stores them AES-encrypted, and resolves the Jira cloud ID.
-
-**Response (200):**
-
-```json
-{ "connected": true, "siteUrl": "https://your-org.atlassian.net", "cloudId": "..." }
-```
-
-### Check Connection Status
-
-```
-GET /api/v1/auth/jira/status?userId=default
-```
-
-**Response (200):**
-
-```json
-{ "connected": true, "siteUrl": "https://your-org.atlassian.net", "expiresAt": "2026-05-14T10:00:00Z" }
+{ "configured": true, "baseUrl": "https://your-org.atlassian.net" }
 ```
 
 ---

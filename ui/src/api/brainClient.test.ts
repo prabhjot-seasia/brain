@@ -60,22 +60,11 @@ describe('brainApi', () => {
     expect(result.status).toBe('COMPLETE')
   })
 
-  it('getJiraStatus returns connection status', async () => {
-    client.get.mockResolvedValue({ data: { connected: true, siteUrl: 'https://flipswap.jira.com' } })
-    const result = await brainApi.getJiraStatus()
-    expect(result.connected).toBe(true)
-  })
-
-  it('getJiraConnectUrl returns auth URL', async () => {
-    client.get.mockResolvedValue({ data: { authUrl: 'https://auth.atlassian.com/...', state: 'abc' } })
-    const result = await brainApi.getJiraConnectUrl()
-    expect(result.authUrl).toContain('atlassian')
-  })
-
-  it('jiraCallback exchanges code for connection', async () => {
-    client.post.mockResolvedValue({ data: { connected: true, siteUrl: 'https://flipswap.jira.com' } })
-    const result = await brainApi.jiraCallback('auth-code-123')
-    expect(result.connected).toBe(true)
+  it('getJiraConfig returns PAT configuration status', async () => {
+    client.get.mockResolvedValue({ data: { configured: true, baseUrl: 'https://flipswap.jira.com' } })
+    const result = await brainApi.getJiraConfig()
+    expect(result.configured).toBe(true)
+    expect(result.baseUrl).toBe('https://flipswap.jira.com')
   })
 
   it('fetchJiraTicket returns extracted text from ticket', async () => {

@@ -38,8 +38,8 @@ public record BrainProperties(
 
     public record GitHub(String token, String apiBaseUrl, int maxSelfReviewIterations) {}
 
-    public record Jira(String oauthClientId, String oauthClientSecret, String oauthRedirectUri, String tokenEncryptionKey,
-                        String webhookSecret, String labelPrefix, String connectedUserId) {}
+    public record Jira(String baseUrl, String email, String apiToken,
+                        String webhookSecret, String labelPrefix) {}
 
     public record Confluence(boolean enabled, String host, String email, String apiToken,
                               String defaultSpaceKey, String defaultParentPageId,

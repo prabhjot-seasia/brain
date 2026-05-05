@@ -30,7 +30,7 @@ class TicketCreationServiceTest {
     @Test
     @DisplayName("creates tickets and returns Jira keys")
     void createsTicketsSuccessfully() {
-        when(jiraClient.createIssue(eq("user-1"), any()))
+        when(jiraClient.createIssue(any()))
                 .thenReturn(Map.of("key", "PROJ-1"))
                 .thenReturn(Map.of("key", "PROJ-2"));
 
@@ -39,7 +39,7 @@ class TicketCreationServiceTest {
                 new ProposedTicket("Add tests", "desc2", "criteria2", "Task", 2, "Medium")
         );
 
-        List<String> result = service.createTickets("user-1", "PROJ", tickets);
+        List<String> result = service.createTickets("PROJ", tickets);
 
         assertThat(result).containsExactly("PROJ-1", "PROJ-2");
     }
@@ -47,14 +47,14 @@ class TicketCreationServiceTest {
     @Test
     @DisplayName("records failure prefix when Jira API throws")
     void handlesJiraFailure() {
-        when(jiraClient.createIssue(eq("user-1"), any()))
+        when(jiraClient.createIssue(any()))
                 .thenThrow(new RuntimeException("Jira unavailable"));
 
         List<ProposedTicket> tickets = List.of(
                 new ProposedTicket("Failing ticket", "desc", "ac", "Story", 1, "Low")
         );
 
-        List<String> result = service.createTickets("user-1", "PROJ", tickets);
+        List<String> result = service.createTickets("PROJ", tickets);
 
         assertThat(result).hasSize(1);
         assertThat(result.get(0)).startsWith(TicketCreationService.FAILED_PREFIX);
@@ -64,7 +64,7 @@ class TicketCreationServiceTest {
     @Test
     @DisplayName("handles mix of success and failure")
     void mixedResults() {
-        when(jiraClient.createIssue(eq("user-1"), any()))
+        when(jiraClient.createIssue(any()))
                 .thenReturn(Map.of("key", "PROJ-1"))
                 .thenThrow(new RuntimeException("503"));
 
@@ -73,7 +73,7 @@ class TicketCreationServiceTest {
                 new ProposedTicket("Bad ticket", "d", "c", "Task", 1, "Medium")
         );
 
-        List<String> result = service.createTickets("user-1", "PROJ", tickets);
+        List<String> result = service.createTickets("PROJ", tickets);
 
         assertThat(result.get(0)).isEqualTo("PROJ-1");
         assertThat(result.get(1)).startsWith(TicketCreationService.FAILED_PREFIX);
@@ -82,7 +82,7 @@ class TicketCreationServiceTest {
     @Test
     @DisplayName("returns empty list for empty tickets")
     void emptyTickets() {
-        List<String> result = service.createTickets("user-1", "PROJ", List.of());
+        List<String> result = service.createTickets("PROJ", List.of());
         assertThat(result).isEmpty();
     }
 }

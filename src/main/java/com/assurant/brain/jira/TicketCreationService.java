@@ -23,10 +23,10 @@ public class TicketCreationService {
     private final AsyncJobService asyncJobService;
 
     @Async("brainLlmExecutor")
-    public void createTicketsAsync(String userId, String projectKey, List<ProposedTicket> tickets, UUID jobId) {
+    public void createTicketsAsync(String projectKey, List<ProposedTicket> tickets, UUID jobId) {
         try {
             asyncJobService.markRunning(jobId, "Creating " + tickets.size() + " ticket(s) in " + projectKey);
-            List<String> createdKeys = createTickets(userId, projectKey, tickets, jobId);
+            List<String> createdKeys = createTickets(projectKey, tickets, jobId);
             long failed = createdKeys.stream().filter(k -> k.startsWith(FAILED_PREFIX)).count();
             Map<String, Object> result = Map.of(
                     "projectKey", projectKey,
@@ -45,11 +45,11 @@ public class TicketCreationService {
         }
     }
 
-    public List<String> createTickets(String userId, String projectKey, List<ProposedTicket> tickets) {
-        return createTickets(userId, projectKey, tickets, null);
+    public List<String> createTickets(String projectKey, List<ProposedTicket> tickets) {
+        return createTickets(projectKey, tickets, null);
     }
 
-    public List<String> createTickets(String userId, String projectKey, List<ProposedTicket> tickets, UUID jobId) {
+    public List<String> createTickets(String projectKey, List<ProposedTicket> tickets, UUID jobId) {
         List<String> createdKeys = new ArrayList<>();
         int total = tickets.size();
         int done = 0;
@@ -64,7 +64,7 @@ public class TicketCreationService {
             );
 
             try {
-                Map<String, Object> response = jiraClient.createIssue(userId, fields);
+                Map<String, Object> response = jiraClient.createIssue(fields);
                 String key = (String) response.get("key");
                 createdKeys.add(key);
                 log.info("Created Jira ticket {} for '{}'", key, ticket.title());

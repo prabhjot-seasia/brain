@@ -91,7 +91,6 @@ public class IntakeController {
     @PostMapping("/jira")
     public ResponseEntity<Map<String, Object>> fetchJiraTicket(@RequestBody Map<String, String> body) {
         String issueKey = body.get("issueKey");
-        String userId = body.getOrDefault("userId", "default");
 
         if (issueKey == null || issueKey.isBlank()) {
             return ResponseEntity.badRequest().body(Map.of("error", "issueKey is required"));
@@ -102,7 +101,7 @@ public class IntakeController {
             issueKey = extractKeyFromUrl(issueKey);
         }
 
-        Map<String, Object> issue = jiraClient.getIssue(userId, issueKey);
+        Map<String, Object> issue = jiraClient.getIssue(issueKey);
         String summary = jiraIssueMapper.extractSummary(issue);
         String key = jiraIssueMapper.extractIssueKey(issue);
         var analyzeRequest = jiraIssueMapper.toAnalyzeRequest(issue, null);

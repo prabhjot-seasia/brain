@@ -75,10 +75,10 @@ class JiraDrivenAutodevOrchestratorTest {
         when(runRepo.save(any(JiraIssueRun.class))).thenAnswer(inv -> inv.getArgument(0));
 
         BrainProperties.Jira jira = new BrainProperties.Jira(
-                null, null, null, null, "secret", "AI_DEV_", "bot");
+                "https://example.atlassian.net", "bot@example.com", "test-token", "secret", "AI_DEV_");
         BrainProperties props = new BrainProperties(null, null, null, null, null, jira, null, null, null, null, null, null, null, null, null, null, null, null, null, null);
 
-        when(jiraClient.getIssueWithComments(eq("bot"), anyString())).thenReturn(Map.of(
+        when(jiraClient.getIssueWithComments(anyString())).thenReturn(Map.of(
                 "key", "BRAIN-1",
                 "fields", Map.of("summary", "Add CSV export", "description", "Need a /export endpoint")));
         when(jiraIssueMapper.extractIssueKey(any())).thenReturn("BRAIN-1");
@@ -114,10 +114,10 @@ class JiraDrivenAutodevOrchestratorTest {
         UUID jobId = UUID.randomUUID();
         orchestrator.beginAnalysis("BRAIN-1", jobId, true);
 
-        verify(jiraClient).addCommentAdf(eq("bot"), eq("BRAIN-1"), any());
+        verify(jiraClient).addCommentAdf(eq("BRAIN-1"), any());
         ArgumentCaptor<List<String>> addCaptor = ArgumentCaptor.forClass(List.class);
         ArgumentCaptor<List<String>> removeCaptor = ArgumentCaptor.forClass(List.class);
-        verify(jiraClient).transitionLabels(eq("bot"), eq("BRAIN-1"),
+        verify(jiraClient).transitionLabels(eq("BRAIN-1"),
                 addCaptor.capture(), removeCaptor.capture());
         assertThat(addCaptor.getValue()).containsExactly("AI_DEV_ANALYSIS");
         assertThat(removeCaptor.getValue()).contains("AI_DEV_READY", "AI_DEV_ANALYSIS_DONE", "AI_DEV_REVIEW_READY");
@@ -143,9 +143,9 @@ class JiraDrivenAutodevOrchestratorTest {
         orchestrator.beginAnalysis("BRAIN-1", jobId, true);
 
         verify(autodevFacade).plan(anyString());
-        verify(jiraClient).addCommentAdf(eq("bot"), eq("BRAIN-1"), any());
+        verify(jiraClient).addCommentAdf(eq("BRAIN-1"), any());
         ArgumentCaptor<List<String>> addCaptor = ArgumentCaptor.forClass(List.class);
-        verify(jiraClient).transitionLabels(eq("bot"), eq("BRAIN-1"), addCaptor.capture(), anyList());
+        verify(jiraClient).transitionLabels(eq("BRAIN-1"), addCaptor.capture(), anyList());
         assertThat(addCaptor.getValue()).containsExactly("AI_DEV_ANALYSIS_DONE");
         verify(asyncJobService).markSucceeded(eq(jobId), any());
     }
@@ -199,9 +199,9 @@ class JiraDrivenAutodevOrchestratorTest {
 
         verify(autodevFacade).execute(eq(sessionId.toString()), eq(List.of("ce-imei")));
         verify(autodevFacade).createPrs(eq(sessionId.toString()), anyList(), eq("BRAIN-1"));
-        verify(jiraClient).addCommentAdf(eq("bot"), eq("BRAIN-1"), any());
+        verify(jiraClient).addCommentAdf(eq("BRAIN-1"), any());
         ArgumentCaptor<List<String>> addCaptor = ArgumentCaptor.forClass(List.class);
-        verify(jiraClient).transitionLabels(eq("bot"), eq("BRAIN-1"), addCaptor.capture(), anyList());
+        verify(jiraClient).transitionLabels(eq("BRAIN-1"), addCaptor.capture(), anyList());
         assertThat(addCaptor.getValue()).containsExactly("AI_DEV_REVIEW_READY");
         verify(asyncJobService).markSucceeded(eq(jobId), any());
         verify(runRepo, atLeastOnce()).save(any(JiraIssueRun.class));

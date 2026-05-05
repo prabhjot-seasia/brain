@@ -77,8 +77,8 @@ export default function TicketProposalPage() {
   })
 
   useEffect(() => {
-    brainApi.getJiraStatus().then(s => {
-      if (s.siteUrl) setJiraSiteUrl(s.siteUrl.replace(/\/$/, ''))
+    brainApi.getJiraConfig().then(s => {
+      if (s.baseUrl) setJiraSiteUrl(s.baseUrl.replace(/\/$/, ''))
     }).catch(() => setError('Failed to load Jira configuration.'))
   }, [])
 

@@ -315,7 +315,7 @@ The UI tests run in a **real Chrome browser** (not headless). WebDriverManager d
 | `DocGeneratorServiceTest` | Cache hit/miss, all doc types | 3 |
 | `DocGeneratorControllerTest` | Async 202 response, status polling, validation, CRUD | 10 |
 | `JiraTicketControllerTest` | Async propose, create, validation | 5 |
-| `JiraOAuthControllerTest` | Connect URL, status connected/expired/missing | 4 |
+| `JiraClientTest` | PAT-auth — base-url missing / credentials missing / jira config null | 3 |
 | `CorrelationIdFilterTest` | ID generation, propagation, sanitization, ThreadContext cleanup | 4 |
 | `BrainMetricsTest` | Micrometer counters/timers registration and increment | 5 |
 | `ApiVersionFilterTest` | X-API-Version header on responses | 1 |

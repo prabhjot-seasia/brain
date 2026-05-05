@@ -135,13 +135,11 @@ brain:
     api-base-url: ${BRAIN_GITHUB_API_BASE_URL:https://github.com/AIZ-GL}
     max-self-review-iterations: 3
   jira:
-    oauth-client-id: ${BRAIN_JIRA_OAUTH_CLIENT_ID:}
-    oauth-client-secret: ${BRAIN_JIRA_OAUTH_CLIENT_SECRET:}
-    oauth-redirect-uri: ${BRAIN_JIRA_OAUTH_REDIRECT_URI:http://localhost:3000/auth/jira/callback}
-    token-encryption-key: ${BRAIN_TOKEN_ENCRYPTION_KEY:}
+    base-url: ${BRAIN_JIRA_BASE_URL:}
+    email: ${BRAIN_JIRA_EMAIL:}
+    api-token: ${BRAIN_JIRA_API_TOKEN:}
     webhook-secret: ${BRAIN_JIRA_WEBHOOK_SECRET:}
     label-prefix: ${BRAIN_JIRA_LABEL_PREFIX:AI_DEV_}
-    connected-user-id: ${BRAIN_JIRA_CONNECTED_USER_ID:}
   confluence:
     enabled: ${BRAIN_CONFLUENCE_ENABLED:false}
     host: ${BRAIN_CONFLUENCE_HOST:}
@@ -316,13 +314,11 @@ brain:
     api-base-url: https://github.com/AIZ-GL
     max-self-review-iterations: 3
   jira:
-    oauth-client-id: ''
-    oauth-client-secret: ''
-    oauth-redirect-uri: http://localhost:3000/auth/jira/callback
-    token-encryption-key: ''
+    base-url: ''
+    email: ''
+    api-token: ''
     webhook-secret: ''
     label-prefix: AI_DEV_
-    connected-user-id: ''
   confluence:
     enabled: false
     host: ''
